@@ -1,9 +1,36 @@
 {
-  "name": "dangunland-root",
+  "name": "dangunland-mud-client",
+  "version": "1.0.0",
+  "description": "Web-based MUD client for DangunLand with retro 80s computer aesthetic",
   "private": true,
-  "workspaces": ["backend", "frontend", "frontend-react"],
+  "type": "module",
+  "main": "backend/src/server.js",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "frontend-react"
+  ],
   "scripts": {
-    "dev": "npm --workspace backend run dev",
-    "build:react": "npm --workspace frontend-react run build"
+    "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend-react run dev\"",
+    "build": "npm --workspace frontend-react run build",
+    "start": "npm run build && node backend/src/server.js",
+    "install-all": "npm install && npm --workspace backend install && npm --workspace frontend-react install",
+    "deploy": "npm run build && npm start"
+  },
+  "keywords": [
+    "mud",
+    "client",
+    "telnet",
+    "websocket",
+    "retro",
+    "terminal"
+  ],
+  "author": "khunny7",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
