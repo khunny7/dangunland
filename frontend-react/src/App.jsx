@@ -22,17 +22,7 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [logOpen, setLogOpen] = useState(false);
   const [connEvents, setConnEvents] = useState([]); // {ts,message}
-  const [theme, setTheme] = useState('dark');
   const decoderRef = useRef(new TextDecoder('euc-kr'));
-
-  // Theme toggle effect
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
 
   const pushEvent = useStableCallback(message => {
     setConnEvents(evts => {
@@ -54,6 +44,8 @@ function App() {
       convertEol: true,
       fontFamily: 'Courier New, monospace',
       fontSize: 14,
+      cols: 80,
+      rows: 24,
       theme: { 
         background: '#001100',
         foreground: '#00ff41',
@@ -65,19 +57,25 @@ function App() {
     });
     
     try {
-      term.open(termRef.current);
-      xtermRef.current = term;
-      
-      // Retro terminal startup message
-      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
-      term.write('\x1b[32m║                        DANGUN TERMINAL v1.0                         ║\x1b[0m\r\n');
-      term.write('\x1b[32m║                     System Ready - Awaiting Connection              ║\x1b[0m\r\n');
-      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
-      term.write('\r\n');
-      term.write('\x1b[33m> Select a server and click CONNECT to begin...\x1b[0m\r\n');
+      // Ensure the container has proper dimensions before opening
+      const container = termRef.current;
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        // Wait for the container to be properly sized
+        setTimeout(() => {
+          if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+            term.open(container);
+            xtermRef.current = term;
+            initializeTerminalContent(term);
+          }
+        }, 50);
+      } else {
+        term.open(container);
+        xtermRef.current = term;
+        initializeTerminalContent(term);
+      }
       
       // Focus input after mount
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => inputRef.current?.focus(), 200);
     } catch (error) {
       console.warn('Terminal initialization error:', error);
     }
@@ -86,12 +84,27 @@ function App() {
       try {
         if (xtermRef.current) {
           xtermRef.current.dispose();
+          xtermRef.current = null;
         }
       } catch (error) {
         console.warn('Terminal disposal error:', error);
       }
     };
   }, []);
+
+  const initializeTerminalContent = (term) => {
+    try {
+      // Retro terminal startup message
+      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
+      term.write('\x1b[32m║                        DANGUN TERMINAL v1.0                         ║\x1b[0m\r\n');
+      term.write('\x1b[32m║                     System Ready - Awaiting Connection              ║\x1b[0m\r\n');
+      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
+      term.write('\r\n');
+      term.write('\x1b[33m> Select a server and click CONNECT to begin...\x1b[0m\r\n');
+    } catch (error) {
+      console.warn('Error writing to terminal:', error);
+    }
+  };
 
   const writeStatus = useCallback(line => {
     console.log('Writing status to terminal:', line);
@@ -243,11 +256,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* Theme Toggle */}
-      <button className="theme-toggle retro-button" onClick={toggleTheme}>
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
-
       {/* Computer Case */}
       <div className="computer-case">
         {/* Decorative Vent */}
