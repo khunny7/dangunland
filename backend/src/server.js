@@ -16,11 +16,15 @@ const ENCODING = 'euc-kr'; // For INPUT encoding only (output stays raw)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
+
+// For Azure deployment, dist is copied to backend/dist
+// For local dev, it's in frontend-react/dist
+const DEPLOYED_DIST = path.join(__dirname, '..', 'dist');
 const REACT_DIST = path.join(ROOT_DIR, 'frontend-react', 'dist');
 const LEGACY_STATIC = path.join(ROOT_DIR, 'frontend', 'public');
 
 // Basic mime map
-const STATIC_DIR = path.join(ROOT_DIR, 'frontend-react', 'dist');
+const STATIC_DIR = fs.existsSync(DEPLOYED_DIST) ? DEPLOYED_DIST : (fs.existsSync(REACT_DIST) ? REACT_DIST : LEGACY_STATIC);
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
 
@@ -30,13 +34,12 @@ const server = http.createServer((req, res) => {
     let relPath = urlPath;
     if (relPath.endsWith('/')) relPath += 'index.html';
     const safePath = path.normalize(relPath).replace(/^\\+|^\/+/,'');
-    const base = fs.existsSync(REACT_DIST) ? REACT_DIST : LEGACY_STATIC;
-    let filePath = path.join(base, safePath);
-    if (!filePath.startsWith(base)) { res.writeHead(403); res.end('Forbidden'); return; }
+    let filePath = path.join(STATIC_DIR, safePath);
+    if (!filePath.startsWith(STATIC_DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
     fs.stat(filePath, (err, stat) => {
       if (err || !stat.isFile()) {
         // SPA fallback to index.html if exists
-        const indexPath = path.join(base, 'index.html');
+        const indexPath = path.join(STATIC_DIR, 'index.html');
         if (fs.existsSync(indexPath)) {
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           fs.createReadStream(indexPath).pipe(res);
@@ -225,4 +228,9 @@ function sendJSON(ws, obj) {
 
 server.listen(PORT, () => {
   console.log(`Server listening on :${PORT} (proxy) targeting ${TARGET_HOST} ports [${TARGET_PORTS.join(', ')}]`);
+  console.log(`Static files serving from: ${STATIC_DIR}`);
+  console.log(`Static directory exists: ${fs.existsSync(STATIC_DIR)}`);
+  if (fs.existsSync(STATIC_DIR)) {
+    console.log(`Files in static directory:`, fs.readdirSync(STATIC_DIR));
+  }
 });
