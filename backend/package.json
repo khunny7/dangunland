@@ -1,0 +1,15 @@
+{
+  "name": "dangunland-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ./src/server.js",
+    "start": "NODE_ENV=production node ./src/server.js"
+  },
+  "dependencies": {
+    "iconv-lite": "0.6.3",
+    "ws": "^8.18.0",
+    "xterm-addon-fit": "^0.8.0"
+  }
+}

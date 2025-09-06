@@ -1,0 +1,9 @@
+{
+  "name": "dangunland-root",
+  "private": true,
+  "workspaces": ["backend", "frontend", "frontend-react"],
+  "scripts": {
+    "dev": "npm --workspace backend run dev",
+    "build:react": "npm --workspace frontend-react run build"
+  }
+}
