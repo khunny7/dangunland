@@ -3,7 +3,15 @@ import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
 import './App.css';
 
-const MUD_HOST = 'localhost:8080'; // backend proxy host
+// Dynamically determine WebSocket host
+const getWebSocketHost = () => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'localhost:8080'; // local development
+  }
+  return window.location.host; // production (Azure)
+};
+
+const MUD_HOST = getWebSocketHost();
 const WS_PATH = '/ws';
 
 function useStableCallback(cb) {
