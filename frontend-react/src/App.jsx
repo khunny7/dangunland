@@ -22,7 +22,17 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [logOpen, setLogOpen] = useState(false);
   const [connEvents, setConnEvents] = useState([]); // {ts,message}
+  const [theme, setTheme] = useState('dark');
   const decoderRef = useRef(new TextDecoder('euc-kr'));
+
+  // Theme toggle effect
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   const pushEvent = useStableCallback(message => {
     setConnEvents(evts => {
@@ -40,40 +50,30 @@ function App() {
   useEffect(() => {
     if (!termRef.current) return;
     
-    // Wait for container to be properly sized
-    const initTerminal = () => {
-      const container = termRef.current;
-      if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
-        setTimeout(initTerminal, 50);
-        return;
-      }
-      
-      const term = new Terminal({
-        convertEol: true,
-        fontFamily: 'monospace',
-        fontSize: 16,
-        rows: 28,
-        cols: 85,
-        theme: { background: '#111111' },
-        disableStdin: true, // prevent direct typing in terminal; use input bar only
-        allowProposedApi: true
-      });
-      
-      try {
-        term.open(container);
-        xtermRef.current = term;
-        
-        // Focus input after terminal is ready
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 100);
-      } catch (error) {
-        console.warn('Terminal initialization error:', error);
-      }
-    };
+    const term = new Terminal({
+      convertEol: true,
+      fontFamily: 'monospace',
+      fontSize: 16,
+      theme: { background: '#111111' },
+      disableStdin: true // prevent direct typing in terminal; use input bar only
+    });
     
-    // Start initialization
-    setTimeout(initTerminal, 100);
+    try {
+      term.open(termRef.current);
+      xtermRef.current = term;
+      
+      // Test content to verify terminal is working
+      term.write('Terminal initialized\r\n');
+      term.write('Testing basic functionality...\r\n');
+      term.write('If you can see this, terminal rendering is working.\r\n');
+      term.write('\x1b[32mGreen text test\x1b[0m\r\n');
+      term.write('\x1b[31mRed text test\x1b[0m\r\n');
+      
+      // Focus input after mount
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } catch (error) {
+      console.warn('Terminal initialization error:', error);
+    }
     
     return () => {
       try {
@@ -87,7 +87,13 @@ function App() {
   }, []);
 
   const writeStatus = useCallback(line => {
-    if (xtermRef.current) xtermRef.current.write(`\r\n*** ${line} ***\r\n`);
+    console.log('Writing status to terminal:', line);
+    console.log('Terminal ref available for status:', !!xtermRef.current);
+    if (xtermRef.current) {
+      xtermRef.current.write(`\r\n\x1b[33m*** ${line} ***\x1b[0m\r\n`);
+    } else {
+      console.warn('Cannot write status - no terminal reference');
+    }
   }, []);
 
   const interpretStatus = useCallback(text => {
@@ -116,6 +122,13 @@ function App() {
     }
     setStatus('Connecting...');
     pushEvent('ui:connect-click');
+    
+    // Clear terminal before connecting
+    if (xtermRef.current) {
+      xtermRef.current.clear();
+      xtermRef.current.write('Connecting to MUD server...\r\n');
+    }
+    
     const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${MUD_HOST}${WS_PATH}`;
     console.log('Attempting to connect to:', wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -156,8 +169,18 @@ function App() {
       } else {
         const u8 = new Uint8Array(ev.data);
         const text = decoderRef.current.decode(u8, { stream: true });
+        console.log('Received text from MUD:', JSON.stringify(text));
+        console.log('Terminal ref available:', !!xtermRef.current);
         if (text && xtermRef.current) {
-          xtermRef.current.write(text);
+          // Convert \n\r to \r\n for better terminal compatibility
+          const normalizedText = text.replace(/\n\r/g, '\r\n');
+          console.log('Writing to terminal:', normalizedText.length, 'characters');
+          console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
+          xtermRef.current.write(normalizedText);
+          // Force terminal refresh
+          xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+        } else {
+          console.warn('Cannot write to terminal:', { hasText: !!text, hasTerminal: !!xtermRef.current });
         }
       }
     };
@@ -208,62 +231,139 @@ function App() {
     xtermRef.current?.clear();
   };
 
+  const getStatusClass = () => {
+    if (status.includes('Connected')) return 'connected';
+    if (status.includes('Connecting')) return 'connecting';
+    return 'disconnected';
+  };
+
+  const getStatusIcon = () => {
+    if (status.includes('Connected')) return '🟢';
+    if (status.includes('Connecting')) return '🟡';
+    return '🔴';
+  };
+
   return (
-    <div className="appRoot">
+    <div className="appRoot fade-in">
       <div className="menuBar">
-        <select value={selectedPort} onChange={e => setSelectedPort(e.target.value)}>
-          <option value="5002">Server 1 (5002)</option>
-          <option value="5003">Server 2 (5003)</option>
-        </select>
-        <button onClick={connect}>Connect</button>
-        <button onClick={clearTerminal}>Clear</button>
-        <button onClick={saveLog}>Save Log</button>
-        <button onClick={() => setLogOpen(o => !o)}>{logOpen ? 'Hide Log' : 'Show Log'}</button>
-        <span className="status">{status}</span>
-        <span className="badge">{activePort ? `port:${activePort}` : 'port:?'}</span>
-      </div>
-      <div className="centerWrap">
-        <div className="terminal" ref={termRef} />
-        <div className="inputBarWrap">
-          <input
-            ref={inputRef}
-            value={inputValue}
-            onChange={e => { setInputValue(e.target.value); historyIndexRef.current = -1; }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') { sendLine(); e.preventDefault(); }
-              else if (e.key === 'ArrowUp') {
-                const hist = historyRef.current;
-                if (hist.length) {
-                  if (historyIndexRef.current === -1) historyIndexRef.current = hist.length - 1; else if (historyIndexRef.current > 0) historyIndexRef.current--;
-                  setInputValue(hist[historyIndexRef.current]);
-                  e.preventDefault();
-                }
-              } else if (e.key === 'ArrowDown') {
-                const hist = historyRef.current;
-                if (hist.length) {
-                  if (historyIndexRef.current >= 0) historyIndexRef.current++;
-                  if (historyIndexRef.current >= hist.length) { historyIndexRef.current = -1; setInputValue(''); } else { setInputValue(hist[historyIndexRef.current]); }
-                  e.preventDefault();
-                }
-              }
-            }}
-            placeholder="Type your command..."
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <button onClick={sendLine}>Send</button>
+        <div className="appTitle">
+          DangunLand Client
         </div>
-        {logOpen && (
-          <div className="connLogPanel">
-            <div className="connLogHeader">
-              <strong>Connection Log</strong>
-              <button onClick={() => setConnEvents([])}>Clear</button>
+        
+        <div className="serverSection">
+          <span className="serverLabel">Server:</span>
+          <select 
+            className="serverSelect" 
+            value={selectedPort} 
+            onChange={e => setSelectedPort(e.target.value)}
+          >
+            <option value="5002">Server 1 (5002)</option>
+            <option value="5003">Server 2 (5003)</option>
+          </select>
+        </div>
+
+        <button className="btn btn-primary" onClick={connect}>
+          🔌 Connect
+        </button>
+        
+        <button className="btn btn-secondary" onClick={clearTerminal}>
+          🧹 Clear
+        </button>
+        
+        <button className="btn btn-secondary" onClick={saveLog}>
+          💾 Save Log
+        </button>
+        
+        <button 
+          className="btn btn-secondary" 
+          onClick={() => setLogOpen(o => !o)}
+        >
+          {logOpen ? '📋 Hide Log' : '📋 Show Log'}
+        </button>
+
+        <button className="themeToggle" onClick={toggleTheme}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
+        <div className="statusSection">
+          <span className={`status ${getStatusClass()}`}>
+            {getStatusIcon()} {status}
+          </span>
+          <span className="badge">
+            {activePort ? `Port: ${activePort}` : 'No Port'}
+          </span>
+        </div>
+      </div>
+
+      <div className="centerWrap">
+        <div className="terminalContainer fade-in">
+          <div className="terminalHeader">
+            <div className="terminalDots">
+              <div className="terminalDot red"></div>
+              <div className="terminalDot yellow"></div>
+              <div className="terminalDot green"></div>
             </div>
-            <ul className="connLogList">
-              {connEvents.slice().reverse().map((e,i) => (
-                <li key={i}>{e.ts} {e.message}</li>
-              ))}
-            </ul>
+            <div className="terminalTitle">
+              Terminal - {activePort ? `Connected to Port ${activePort}` : 'Not Connected'}
+            </div>
+          </div>
+          
+          <div className="terminal" ref={termRef} />
+          
+          <div className="inputBarWrap">
+            <input
+              ref={inputRef}
+              value={inputValue}
+              onChange={e => { setInputValue(e.target.value); historyIndexRef.current = -1; }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { sendLine(); e.preventDefault(); }
+                else if (e.key === 'ArrowUp') {
+                  const hist = historyRef.current;
+                  if (hist.length) {
+                    if (historyIndexRef.current === -1) historyIndexRef.current = hist.length - 1; 
+                    else if (historyIndexRef.current > 0) historyIndexRef.current--;
+                    setInputValue(hist[historyIndexRef.current]);
+                    e.preventDefault();
+                  }
+                } else if (e.key === 'ArrowDown') {
+                  const hist = historyRef.current;
+                  if (hist.length) {
+                    if (historyIndexRef.current >= 0) historyIndexRef.current++;
+                    if (historyIndexRef.current >= hist.length) { 
+                      historyIndexRef.current = -1; 
+                      setInputValue(''); 
+                    } else { 
+                      setInputValue(hist[historyIndexRef.current]); 
+                    }
+                    e.preventDefault();
+                  }
+                }
+              }}
+              placeholder="Type your command and press Enter..."
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <button className="btn btn-primary" onClick={sendLine}>
+              ⚡ Send
+            </button>
+          </div>
+        </div>
+
+        {logOpen && (
+          <div className="connLogPanel fade-in">
+            <div className="connLogHeader">
+              <strong>📊 Connection Log</strong>
+              <button className="btn btn-secondary" onClick={() => setConnEvents([])}>
+                🗑️ Clear
+              </button>
+            </div>
+            <div className="connLogContent">
+              <ul className="connLogList">
+                {connEvents.slice().reverse().map((e,i) => (
+                  <li key={i}>[{e.ts}] {e.message}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
       </div>
