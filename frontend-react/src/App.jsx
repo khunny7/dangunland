@@ -21,8 +21,16 @@ function App() {
   const [activePort, setActivePort] = useState(null);
   const [inputValue, setInputValue] = useState('');
   const [logOpen, setLogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [connEvents, setConnEvents] = useState([]); // {ts,message}
+  
+  // Settings
+  const [heartbeatEnabled, setHeartbeatEnabled] = useState(true);
+  const [heartbeatInterval, setHeartbeatInterval] = useState(60); // seconds
+  
   const decoderRef = useRef(new TextDecoder('euc-kr'));
+  const heartbeatTimerRef = useRef(null);
+  const lastInputTimeRef = useRef(Date.now()); // Track last user input
 
   const pushEvent = useStableCallback(message => {
     setConnEvents(evts => {
@@ -59,18 +67,27 @@ function App() {
     try {
       // Ensure the container has proper dimensions before opening
       const container = termRef.current;
+      if (!container) {
+        console.warn('Terminal container not found');
+        return;
+      }
+      
       if (container.offsetWidth === 0 || container.offsetHeight === 0) {
         // Wait for the container to be properly sized
         setTimeout(() => {
           if (container.offsetWidth > 0 && container.offsetHeight > 0) {
             term.open(container);
             xtermRef.current = term;
+            console.log('Terminal initialized (delayed)');
             initializeTerminalContent(term);
+          } else {
+            console.warn('Terminal container still has no dimensions after delay');
           }
-        }, 50);
+        }, 100);
       } else {
         term.open(container);
         xtermRef.current = term;
+        console.log('Terminal initialized (immediate)');
         initializeTerminalContent(term);
       }
       
@@ -92,6 +109,40 @@ function App() {
     };
   }, []);
 
+  // Heartbeat functions - defined before they are used
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatTimerRef.current) {
+      clearInterval(heartbeatTimerRef.current);
+      heartbeatTimerRef.current = null;
+    }
+  }, []);
+
+  const startHeartbeat = useCallback(() => {
+    stopHeartbeat(); // Clear any existing timer
+    if (heartbeatEnabled && heartbeatInterval > 0) {
+      heartbeatTimerRef.current = setInterval(() => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          const now = Date.now();
+          const timeSinceLastInput = (now - lastInputTimeRef.current) / 1000; // seconds
+          
+          // Only send heartbeat if user has been idle for the configured interval
+          if (timeSinceLastInput >= heartbeatInterval) {
+            wsRef.current.send(JSON.stringify({ t: 'input', data: '\n' }));
+            console.log(`Heartbeat sent after ${Math.round(timeSinceLastInput)}s of inactivity`);
+          }
+        }
+      }, 10000); // Check every 10 seconds instead of waiting the full interval
+    }
+  }, [heartbeatEnabled, heartbeatInterval, stopHeartbeat]);
+
+  // Effect to restart heartbeat when settings change
+  useEffect(() => {
+    if (activePort && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      startHeartbeat();
+    }
+    return () => stopHeartbeat();
+  }, [heartbeatEnabled, heartbeatInterval, startHeartbeat, stopHeartbeat, activePort]);
+
   const initializeTerminalContent = (term) => {
     try {
       // Retro terminal startup message
@@ -109,10 +160,17 @@ function App() {
   const writeStatus = useCallback(line => {
     console.log('Writing status to terminal:', line);
     console.log('Terminal ref available for status:', !!xtermRef.current);
-    if (xtermRef.current) {
-      xtermRef.current.write(`\r\n\x1b[33m*** ${line} ***\x1b[0m\r\n`);
+    if (xtermRef.current && typeof xtermRef.current.write === 'function') {
+      try {
+        xtermRef.current.write(`\r\n\x1b[33m*** ${line} ***\x1b[0m\r\n`);
+      } catch (error) {
+        console.error('Error writing status to terminal:', error);
+      }
     } else {
-      console.warn('Cannot write status - no terminal reference');
+      console.warn('Cannot write status - terminal not ready:', {
+        hasTerminal: !!xtermRef.current,
+        hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
+      });
     }
   }, []);
 
@@ -143,6 +201,9 @@ function App() {
     setStatus('Connecting...');
     pushEvent('ui:connect-click');
     
+    // Reset last input time when connecting
+    lastInputTimeRef.current = Date.now();
+    
     // Clear terminal before connecting
     if (xtermRef.current) {
       xtermRef.current.clear();
@@ -159,12 +220,14 @@ function App() {
       setStatus('WebSocket Open');
       pushEvent('ws:open');
       ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(selectedPort, 10) }));
+      startHeartbeat();
     };
     ws.onclose = () => {
       console.log('WebSocket closed');
       setStatus('Disconnected');
       pushEvent('ws:close');
       setActivePort(null);
+      stopHeartbeat();
     };
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
@@ -191,24 +254,37 @@ function App() {
         const text = decoderRef.current.decode(u8, { stream: true });
         console.log('Received text from MUD:', JSON.stringify(text));
         console.log('Terminal ref available:', !!xtermRef.current);
-        if (text && xtermRef.current) {
-          // Convert \n\r to \r\n for better terminal compatibility
-          const normalizedText = text.replace(/\n\r/g, '\r\n');
-          console.log('Writing to terminal:', normalizedText.length, 'characters');
-          console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
-          xtermRef.current.write(normalizedText);
-          // Force terminal refresh
-          xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+        if (text && xtermRef.current && typeof xtermRef.current.write === 'function') {
+          try {
+            // Convert \n\r to \r\n for better terminal compatibility
+            const normalizedText = text.replace(/\n\r/g, '\r\n');
+            console.log('Writing to terminal:', normalizedText.length, 'characters');
+            console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
+            xtermRef.current.write(normalizedText);
+            // Force terminal refresh only if the method exists
+            if (typeof xtermRef.current.refresh === 'function') {
+              xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+            }
+          } catch (error) {
+            console.error('Error writing to terminal:', error);
+          }
         } else {
-          console.warn('Cannot write to terminal:', { hasText: !!text, hasTerminal: !!xtermRef.current });
+          console.warn('Cannot write to terminal:', { 
+            hasText: !!text, 
+            hasTerminal: !!xtermRef.current,
+            hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
+          });
         }
       }
     };
-  }, [selectedPort, pushEvent, writeStatus, interpretStatus]);
+  }, [selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat]);
 
   const sendLine = useCallback(() => {
     const raw = inputValue;
     const line = raw.trimEnd();
+    
+    // Update last input time when user sends a command
+    lastInputTimeRef.current = Date.now();
     
     // Always send something, even if empty (just newline)
     const dataToSend = line + '\n';
@@ -301,6 +377,13 @@ function App() {
             >
               {logOpen ? 'Hide Log' : 'Show Log'}
             </button>
+            
+            <button 
+              className="retro-button" 
+              onClick={() => setSettingsOpen(o => !o)}
+            >
+              Settings
+            </button>
           </div>
 
           <input
@@ -356,6 +439,61 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Settings Popup */}
+      {settingsOpen && (
+        <div className="settings-overlay" onClick={() => setSettingsOpen(false)}>
+          <div className="settings-popup" onClick={e => e.stopPropagation()}>
+            <div className="settings-header">
+              <strong>⚙️ TERMINAL SETTINGS</strong>
+              <button 
+                className="retro-button close-btn" 
+                onClick={() => setSettingsOpen(false)}
+                style={{fontSize: '10px', padding: '4px 8px'}}
+              >
+                ✕ Close
+              </button>
+            </div>
+            
+            <div className="settings-content">
+              <div className="setting-group">
+                <label className="setting-label">
+                  <input
+                    type="checkbox"
+                    checked={heartbeatEnabled}
+                    onChange={e => setHeartbeatEnabled(e.target.checked)}
+                    className="setting-checkbox"
+                  />
+                  <span>Auto-Heartbeat (Prevent Timeout)</span>
+                </label>
+                <div className="setting-description">
+                  Sends empty commands only when idle to prevent server timeouts
+                </div>
+              </div>
+
+              {heartbeatEnabled && (
+                <div className="setting-group">
+                  <label className="setting-label">
+                    Idle Timeout: {heartbeatInterval} seconds
+                  </label>
+                  <input
+                    type="range"
+                    min="30"
+                    max="300"
+                    step="30"
+                    value={heartbeatInterval}
+                    onChange={e => setHeartbeatInterval(parseInt(e.target.value))}
+                    className="setting-slider"
+                  />
+                  <div className="setting-description">
+                    Send heartbeat after this many seconds of inactivity (30-300 seconds)
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
