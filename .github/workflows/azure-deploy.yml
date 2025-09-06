@@ -41,6 +41,9 @@ jobs:
         run: |
           # Copy built frontend to backend for serving
           cp -r frontend-react/dist backend/
+          # Create a production package.json in backend
+          cd backend
+          npm pkg set scripts.start="node src/server.js"
           
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -75,5 +78,4 @@ jobs:
           app-name: 'dangunland'
           slot-name: 'Production'
           package: .
-          startup-file: 'src/server.js'
           
