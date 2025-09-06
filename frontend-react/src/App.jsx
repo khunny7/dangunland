@@ -52,9 +52,15 @@ function App() {
     
     const term = new Terminal({
       convertEol: true,
-      fontFamily: 'monospace',
-      fontSize: 16,
-      theme: { background: '#111111' },
+      fontFamily: 'Courier New, monospace',
+      fontSize: 14,
+      theme: { 
+        background: '#001100',
+        foreground: '#00ff41',
+        cursor: '#00ff41',
+        cursorAccent: '#001100',
+        selection: 'rgba(255, 255, 255, 0.3)'
+      },
       disableStdin: true // prevent direct typing in terminal; use input bar only
     });
     
@@ -62,12 +68,13 @@ function App() {
       term.open(termRef.current);
       xtermRef.current = term;
       
-      // Test content to verify terminal is working
-      term.write('Terminal initialized\r\n');
-      term.write('Testing basic functionality...\r\n');
-      term.write('If you can see this, terminal rendering is working.\r\n');
-      term.write('\x1b[32mGreen text test\x1b[0m\r\n');
-      term.write('\x1b[31mRed text test\x1b[0m\r\n');
+      // Retro terminal startup message
+      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
+      term.write('\x1b[32m║                        DANGUN TERMINAL v1.0                         ║\x1b[0m\r\n');
+      term.write('\x1b[32m║                     System Ready - Awaiting Connection              ║\x1b[0m\r\n');
+      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
+      term.write('\r\n');
+      term.write('\x1b[33m> Select a server and click CONNECT to begin...\x1b[0m\r\n');
       
       // Focus input after mount
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -228,144 +235,118 @@ function App() {
   };
 
   const clearTerminal = () => {
-    xtermRef.current?.clear();
-  };
-
-  const getStatusClass = () => {
-    if (status.includes('Connected')) return 'connected';
-    if (status.includes('Connecting')) return 'connecting';
-    return 'disconnected';
-  };
-
-  const getStatusIcon = () => {
-    if (status.includes('Connected')) return '🟢';
-    if (status.includes('Connecting')) return '🟡';
-    return '🔴';
+    if (xtermRef.current) {
+      xtermRef.current.clear();
+      xtermRef.current.write('\x1b[32m> Terminal cleared\x1b[0m\r\n');
+    }
   };
 
   return (
-    <div className="appRoot fade-in">
-      <div className="menuBar">
-        <div className="appTitle">
-          DangunLand Client
-        </div>
-        
-        <div className="serverSection">
-          <span className="serverLabel">Server:</span>
-          <select 
-            className="serverSelect" 
-            value={selectedPort} 
-            onChange={e => setSelectedPort(e.target.value)}
-          >
-            <option value="5002">Server 1 (5002)</option>
-            <option value="5003">Server 2 (5003)</option>
-          </select>
-        </div>
+    <div className="app">
+      {/* Theme Toggle */}
+      <button className="theme-toggle retro-button" onClick={toggleTheme}>
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
 
-        <button className="btn btn-primary" onClick={connect}>
-          🔌 Connect
-        </button>
+      {/* Computer Case */}
+      <div className="computer-case">
+        {/* Decorative Vent */}
+        <div className="vent"></div>
         
-        <button className="btn btn-secondary" onClick={clearTerminal}>
-          🧹 Clear
-        </button>
-        
-        <button className="btn btn-secondary" onClick={saveLog}>
-          💾 Save Log
-        </button>
-        
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => setLogOpen(o => !o)}
-        >
-          {logOpen ? '📋 Hide Log' : '📋 Show Log'}
-        </button>
-
-        <button className="themeToggle" onClick={toggleTheme}>
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-
-        <div className="statusSection">
-          <span className={`status ${getStatusClass()}`}>
-            {getStatusIcon()} {status}
-          </span>
-          <span className="badge">
-            {activePort ? `Port: ${activePort}` : 'No Port'}
-          </span>
-        </div>
-      </div>
-
-      <div className="centerWrap">
-        <div className="terminalContainer fade-in">
-          <div className="terminalHeader">
-            <div className="terminalDots">
-              <div className="terminalDot red"></div>
-              <div className="terminalDot yellow"></div>
-              <div className="terminalDot green"></div>
-            </div>
-            <div className="terminalTitle">
-              Terminal - {activePort ? `Connected to Port ${activePort}` : 'Not Connected'}
-            </div>
-          </div>
-          
+        {/* Monitor */}
+        <div className="monitor">
           <div className="terminal" ref={termRef} />
-          
-          <div className="inputBarWrap">
-            <input
-              ref={inputRef}
-              value={inputValue}
-              onChange={e => { setInputValue(e.target.value); historyIndexRef.current = -1; }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') { sendLine(); e.preventDefault(); }
-                else if (e.key === 'ArrowUp') {
-                  const hist = historyRef.current;
-                  if (hist.length) {
-                    if (historyIndexRef.current === -1) historyIndexRef.current = hist.length - 1; 
-                    else if (historyIndexRef.current > 0) historyIndexRef.current--;
-                    setInputValue(hist[historyIndexRef.current]);
-                    e.preventDefault();
-                  }
-                } else if (e.key === 'ArrowDown') {
-                  const hist = historyRef.current;
-                  if (hist.length) {
-                    if (historyIndexRef.current >= 0) historyIndexRef.current++;
-                    if (historyIndexRef.current >= hist.length) { 
-                      historyIndexRef.current = -1; 
-                      setInputValue(''); 
-                    } else { 
-                      setInputValue(hist[historyIndexRef.current]); 
-                    }
-                    e.preventDefault();
-                  }
-                }
-              }}
-              placeholder="Type your command and press Enter..."
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <button className="btn btn-primary" onClick={sendLine}>
-              ⚡ Send
+        </div>
+
+        {/* Control Panel */}
+        <div className="control-panel">
+          <div className="menu-bar">
+            <div className="status-section">
+              <span className={`status-light ${activePort ? 'connected' : ''}`}></span>
+              <span className="status-text">{status}</span>
+            </div>
+            
+            <select 
+              className="retro-select" 
+              value={selectedPort} 
+              onChange={e => setSelectedPort(e.target.value)}
+            >
+              <option value="5002">Server 1 (5002)</option>
+              <option value="5003">Server 2 (5003)</option>
+            </select>
+
+            <button className="retro-button connect" onClick={connect}>
+              🔌 Connect
+            </button>
+            
+            <button className="retro-button" onClick={clearTerminal}>
+              Clear
+            </button>
+            
+            <button className="retro-button" onClick={saveLog}>
+              Save Log
+            </button>
+            
+            <button 
+              className="retro-button" 
+              onClick={() => setLogOpen(o => !o)}
+            >
+              {logOpen ? 'Hide Log' : 'Show Log'}
             </button>
           </div>
-        </div>
 
-        {logOpen && (
-          <div className="connLogPanel fade-in">
-            <div className="connLogHeader">
-              <strong>📊 Connection Log</strong>
-              <button className="btn btn-secondary" onClick={() => setConnEvents([])}>
-                🗑️ Clear
-              </button>
-            </div>
-            <div className="connLogContent">
-              <ul className="connLogList">
+          <input
+            ref={inputRef}
+            className="input-bar"
+            value={inputValue}
+            onChange={e => { setInputValue(e.target.value); historyIndexRef.current = -1; }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { sendLine(); e.preventDefault(); }
+              else if (e.key === 'ArrowUp') {
+                const hist = historyRef.current;
+                if (hist.length) {
+                  if (historyIndexRef.current === -1) historyIndexRef.current = hist.length - 1; 
+                  else if (historyIndexRef.current > 0) historyIndexRef.current--;
+                  setInputValue(hist[historyIndexRef.current]);
+                  e.preventDefault();
+                }
+              } else if (e.key === 'ArrowDown') {
+                const hist = historyRef.current;
+                if (hist.length) {
+                  if (historyIndexRef.current >= 0) historyIndexRef.current++;
+                  if (historyIndexRef.current >= hist.length) { 
+                    historyIndexRef.current = -1; 
+                    setInputValue(''); 
+                  } else { 
+                    setInputValue(hist[historyIndexRef.current]); 
+                  }
+                  e.preventDefault();
+                }
+              }
+            }}
+            placeholder="Enter command..."
+            spellCheck={false}
+            autoComplete="off"
+          />
+
+          {logOpen && (
+            <div className="log-panel">
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                <strong>CONNECTION LOG</strong>
+                <button className="retro-button" onClick={() => setConnEvents([])} style={{fontSize: '10px', padding: '4px 8px'}}>
+                  Clear
+                </button>
+              </div>
+              <div style={{maxHeight: '150px', overflowY: 'auto'}}>
                 {connEvents.slice().reverse().map((e,i) => (
-                  <li key={i}>[{e.ts}] {e.message}</li>
+                  <div key={i} className="log-entry">
+                    [{e.ts}] {e.message}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
