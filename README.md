@@ -11,6 +11,11 @@ A modern web-based MUD (Multi-User Dungeon) client that supports legacy Korean e
 - **Multiple Server Support**: Easy switching between different MUD servers
 - **Connection Logging**: Built-in connection event logging
 - **Real-time Communication**: WebSocket-based communication for low latency
+- **Macros & Triggers**: Advanced automation features for power users
+  - **Text Aliases**: Create short commands that expand to longer sequences
+  - **Function Key Macros**: Bind F1-F12 keys to execute commands instantly
+  - **Pattern Triggers**: Automatically respond to specific text from the server
+  - **Persistent Settings**: All configurations saved locally
 
 ## Architecture
 
@@ -103,6 +108,28 @@ The project consists of two main components:
    - **Clear**: Clear the terminal display
    - **Save Log**: Download session logs
    - **Show/Hide Log**: Toggle connection event log panel
+   - **Settings**: Configure heartbeat, macros, and triggers
+
+## Macros and Triggers
+
+### Macros
+The client supports two types of macros:
+- **Text Aliases**: Short commands that expand to longer ones (e.g., "heal" → "cast cure light wounds on self")
+- **Function Key Bindings**: F1-F12 keys that execute commands instantly
+
+### Triggers
+Automatically execute commands when specific text patterns are received:
+- **Contains**: Trigger when text contains a phrase
+- **Exact Match**: Trigger on exact text match
+- **Regular Expression**: Advanced pattern matching
+- **Configurable Delay**: Add delays between trigger and response
+
+### Settings Management
+Access the Settings panel to:
+- Configure auto-heartbeat to prevent timeouts
+- Create and manage macros
+- Set up triggers for automation
+- All settings are automatically saved locally
 
 ## Configuration
 
