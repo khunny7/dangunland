@@ -39,6 +39,8 @@ jobs:
 
       - name: Prepare backend for deployment
         run: |
+          # Copy shared module to backend
+          cp -r shared backend/src/
           # Copy built frontend to backend for serving
           cp -r frontend-react/dist backend/
           # Create a production package.json in backend
