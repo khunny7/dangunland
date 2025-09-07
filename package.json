@@ -13,14 +13,17 @@
     "electron-app"
   ],
   "scripts": {
-    "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend-react run dev\"",
-    "dev:electron": "npm run build && npm --workspace electron-app run dev",
-    "build": "npm --workspace frontend-react run build",
-    "build:electron": "npm --workspace electron-app run build",
-    "start": "npm run build && node backend/src/server.js",
-    "install-all": "npm install && npm --workspace backend install && npm --workspace frontend-react install && npm --workspace electron-app install",
-    "deploy": "npm run build && npm start",
-    "dist:electron": "npm --workspace electron-app run dist"
+  "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend-react run dev\"",
+  "dev:electron": "npm run build:electron && npm --workspace electron-app run dev",
+  "dev:all": "concurrently \"npm run dev\" \"npm run dev:electron\"",
+  "build": "npm --workspace frontend-react run build",
+  "build:electron": "npm --workspace electron-app run build",
+  "clean": "npm --workspace frontend-react run clean && npm --workspace electron-app run clean",
+  "rebuild": "npm run clean && npm run build && npm run build:electron",
+  "start": "npm run build && node backend/src/server.js",
+  "install-all": "npm install && npm --workspace backend install && npm --workspace frontend-react install && npm --workspace electron-app install",
+  "deploy": "npm run build && npm start",
+  "dist:electron": "npm --workspace electron-app run dist"
   },
   "keywords": [
     "mud",

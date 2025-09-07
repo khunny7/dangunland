@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { MudConnection } from '../shared/mud-connection.js';
+import { MudConnection } from '../../shared/mud-connection.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,7 +57,9 @@ function createWindow() {
 
 // Initialize MUD connection and IPC handlers
 function initializeMudConnection() {
+  // Always create a fresh MudConnection instance
   mudConnection = new MudConnection();
+  console.log('Created new MudConnection instance');
 
   // Forward MUD events to renderer process
   mudConnection.on('data', (data) => {
@@ -80,8 +82,10 @@ function initializeMudConnection() {
 
   // IPC handlers for MUD operations
   ipcMain.handle('mud-connect', async (event, port) => {
+    console.log('IPC: mud-connect called with port:', port);
     try {
       mudConnection.connect(port);
+      console.log('IPC: mudConnection.connect completed');
     } catch (error) {
       console.error('MUD connect error:', error);
       throw error;

@@ -487,7 +487,11 @@ function App() {
     });
 
     return () => {
-      comm.close();
+      // In Electron, don't close the connection on cleanup to avoid issues
+      // The main process manages the connection lifecycle
+      if (!isElectron()) {
+        comm.close();
+      }
       comm.removeAllListeners();
     };
   }, []);

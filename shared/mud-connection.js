@@ -108,20 +108,30 @@ export class MudConnection extends EventEmitter {
    * @param {number} port - Port number to connect to
    */
   connect(port) {
-    if (this.closed) return;
+    console.log('MudConnection.connect called with port:', port);
+    console.log('TARGET_PORTS:', TARGET_PORTS);
+    console.log('this.closed:', this.closed);
+    // If previously manually closed, allow reconnect by clearing the flag
+    if (this.closed) {
+      this.closed = false;
+    }
     
     if (!TARGET_PORTS.includes(port)) {
+      console.log('Invalid port, emitting error');
       this.emit('error', `Invalid port: ${port}. Must be one of: ${TARGET_PORTS.join(', ')}`);
       return;
     }
 
     // Close existing connection
     if (this.socket) {
+      console.log('Closing existing socket');
       this.socket.destroy();
     }
 
+    console.log('MudConnection: emitting status connecting to', TARGET_HOST, port);
     this.emit('status', `connecting:${TARGET_HOST}:${port}`);
     
+    console.log('Creating socket connection...');
     const socket = net.createConnection(port, TARGET_HOST);
     this.socket = socket;
     let connected = false;
@@ -198,7 +208,9 @@ export class MudConnection extends EventEmitter {
    * Close connection
    */
   close() {
-    this.closed = true;
+    console.log('MudConnection.close() called - stack trace:', new Error().stack);
+  // Do not permanently lock reconnections; mark as soft closed
+  this.closed = false;
     if (this.socket) {
       this.socket.destroy();
       this.socket = null;

@@ -5,12 +5,15 @@
   "main": "src/main.js",
   "type": "module",
   "scripts": {
-    "dev": "electron .",
-    "build": "npm run build:frontend && npm run copy:frontend",
-    "build:frontend": "cd ../frontend-react && npm run build",
-    "copy:frontend": "mkdir -p ./dist && cp -r ../frontend-react/dist/* ./dist/",
-    "pack": "electron-builder",
-    "dist": "npm run build && electron-builder"
+  "dev": "electron .",
+  "start": "npm run dev",
+  "build": "npm run build:frontend && npm run copy:frontend",
+  "build:frontend": "cd ../frontend-react && npx vite build --base=./",
+  "copy:frontend": "if not exist .\\dist rmdir /s /q .\\dist && mkdir .\\dist && xcopy /E /I /Y ..\\frontend-react\\dist\\* .\\dist\\",
+  "clean": "if exist .\\dist rmdir /s /q .\\dist",
+  "rebuild": "npm run clean && npm run build",
+  "pack": "electron-builder",
+  "dist": "npm run build && electron-builder"
   },
   "build": {
     "appId": "com.khunny7.dangunland",
