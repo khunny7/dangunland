@@ -738,35 +738,277 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* App Layout */
+  .appRoot {
+    padding: 8px;
+  }
+  
+  /* Menu Bar */
   .menuBar {
     padding: 12px 16px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
+    position: relative;
   }
   
   .appTitle {
     font-size: 18px;
     margin-right: 0;
     width: 100%;
+    order: -1;
+    margin-bottom: 8px;
   }
   
-  .centerWrap {
-    padding: 20px 16px;
-    gap: 16px;
+  .statusSection {
+    width: 100%;
+    justify-content: space-between;
+    order: 10;
+    margin-top: 8px;
   }
   
-  .terminal {
-    height: 400px;
+  /* Buttons */
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 44px;
+    min-width: auto;
   }
   
   .menuBar .btn {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+    flex: 1;
+    max-width: calc(50% - 4px);
   }
   
   .serverSelect {
     min-width: 120px;
     font-size: 13px;
+    height: 40px;
+    flex: 1;
+    max-width: 200px;
+  }
+  
+  /* Center Content */
+  .centerWrap {
+    padding: 16px 8px;
+    gap: 12px;
+  }
+  
+  /* Terminal Container */
+  .terminalContainer {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .terminal {
+    height: 350px;
+    width: 100%;
+    min-width: auto;
+    min-height: 300px;
+  }
+  
+  .monitor {
+    padding: 10px;
+    width: 100%;
+  }
+  
+  .control-panel {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  
+  .menu-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    justify-content: flex-start;
+  }
+  
+  .retro-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+    flex: 0 1 calc(33.333% - 4px);
+    margin: 2px 0;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  
+  .retro-button.connect {
+    flex: 0 1 calc(50% - 3px);
+  }
+  
+  .retro-select {
+    min-height: 40px;
+    font-size: 13px;
+    flex: 0 1 calc(50% - 3px);
+    margin: 2px 0;
+    box-sizing: border-box;
+  }
+  
+  .status-section {
+    width: 100%;
+    order: -1;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .input-bar {
+    font-size: 16px;
+    padding: 12px 14px;
+    min-height: 44px;
+    width: 100%;
+    margin-top: 8px;
+    box-sizing: border-box;
+  }
+  
+  /* Input Bar */
+  .inputBarWrap {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .inputBarWrap input {
+    font-size: 16px;
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+  
+  /* Settings Popup */
+  .settings-popup {
+    min-width: auto;
+    max-width: calc(100vw - 32px);
+    width: calc(100% - 32px);
+    margin: 16px;
+    padding: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+  
+  .settings-content {
+    gap: 16px;
+  }
+  
+  .setting-group {
+    padding: 12px;
+  }
+  
+  /* Form Elements */
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .form-input, .form-select {
+    font-size: 16px;
+    padding: 8px 12px;
+    min-height: 44px;
+  }
+  
+  .form-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .retro-button {
+    padding: 10px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  /* Connection Log */
+  .connLogContent {
+    padding: 12px 16px;
+    max-height: 150px;
+  }
+  
+  .connLogList {
+    font-size: 11px;
+  }
+  
+  /* Manager Containers */
+  .manager-container {
+    padding: 12px;
+  }
+  
+  .macro-item, .trigger-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .macro-actions, .trigger-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .macro-actions .retro-button,
+  .trigger-actions .retro-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Extra Small Mobile Devices */
+@media (max-width: 480px) {
+  .menuBar {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  
+  .menuBar .btn {
+    font-size: 11px;
+    padding: 6px 8px;
+    min-height: 36px;
+  }
+  
+  .terminal {
+    height: 280px;
+    min-height: 250px;
+  }
+  
+  .settings-popup {
+    margin: 8px;
+    padding: 12px;
+  }
+  
+  .centerWrap {
+    padding: 8px 4px;
+  }
+  
+  .retro-button {
+    flex: 0 1 calc(50% - 3px);
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+}
+
+/* Tablet Responsive Design */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .terminal {
+    height: 500px;
+  }
+  
+  .control-panel {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .retro-button {
+    flex: 0 1 auto;
+    min-width: 120px;
+  }
+  
+  .menu-bar {
+    justify-content: center;
+    gap: 12px;
   }
 }
 
