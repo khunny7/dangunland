@@ -740,12 +740,12 @@ body {
 @media (max-width: 768px) {
   /* App Layout */
   .appRoot {
-    padding: 8px;
+    padding: 4px;
   }
   
   /* Menu Bar */
   .menuBar {
-    padding: 12px 16px;
+    padding: 12px 8px;
     flex-wrap: wrap;
     gap: 8px;
     position: relative;
@@ -792,7 +792,7 @@ body {
   
   /* Center Content */
   .centerWrap {
-    padding: 16px 8px;
+    padding: 12px 4px;
     gap: 12px;
   }
   
@@ -892,6 +892,44 @@ body {
     overflow-y: auto;
   }
   
+  /* Mobile-specific improvements for settings */
+  .settings-header {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .setting-label {
+    font-size: 14px;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .setting-description {
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  
+  .setting-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .setting-slider {
+    height: 8px;
+    margin: 10px 0;
+  }
+  
+  .setting-slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .tab-button {
+    font-size: 13px;
+    padding: 10px 14px;
+    min-height: 44px;
+  }
+  
   .settings-content {
     gap: 16px;
   }
@@ -975,12 +1013,53 @@ body {
   }
   
   .settings-popup {
-    margin: 8px;
-    padding: 12px;
+    margin: 12px;
+    padding: 20px;
+    min-width: auto;
+    max-width: calc(100vw - 24px);
+    width: calc(100% - 24px);
+  }
+  
+  /* Enhanced mobile settings for very small screens */
+  .settings-header {
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+  
+  .setting-label {
+    font-size: 16px;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .setting-description {
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  
+  .setting-checkbox {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .setting-slider {
+    height: 10px;
+    margin: 12px 0;
+  }
+  
+  .setting-slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .tab-button {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
   }
   
   .centerWrap {
-    padding: 8px 4px;
+    padding: 6px 2px;
   }
   
   .retro-button {
