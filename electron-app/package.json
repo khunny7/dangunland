@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "electron .",
     "build": "npm run build:frontend && npm run copy:frontend",
-    "build:frontend": "npm --workspace ../frontend-react run build",
-    "copy:frontend": "cp -r ../frontend-react/dist/* ./dist/",
+    "build:frontend": "cd ../frontend-react && npm run build",
+    "copy:frontend": "mkdir -p ./dist && cp -r ../frontend-react/dist/* ./dist/",
     "pack": "electron-builder",
     "dist": "npm run build && electron-builder"
   },
