@@ -8,7 +8,9 @@
   "workspaces": [
     "backend",
     "frontend",
-    "frontend-react"
+    "frontend-react",
+    "shared",
+    "electron-app"
   ],
   "scripts": {
     "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend-react run dev\"",

@@ -19,11 +19,25 @@ A modern web-based MUD (Multi-User Dungeon) client that supports legacy Korean e
 
 ## Architecture
 
-The project consists of two main components:
+The project now supports both web and desktop deployment:
+
+### Web Version
+- **Backend** (Node.js Proxy Server): `backend/`
+- **Frontend** (React Application): `frontend-react/`
+
+### Desktop Version (Electron)
+- **Electron App**: `electron-app/`
+- **Shared Modules**: `shared/`
+
+### Key Features:
+- **Dual Deployment**: Same codebase runs as both web app and desktop app
+- **Direct Connection**: Electron app connects directly to MUD server (no proxy needed)
+- **Code Sharing**: MUD connection logic and communication layer shared between versions
+- **Environment Detection**: React app automatically detects web vs Electron environment
 
 ### Backend (Node.js Proxy Server)
 - **Location**: `backend/`
-- **Purpose**: Handles Telnet connections and encoding conversion
+- **Purpose**: Handles Telnet connections and encoding conversion for web version
 - **Features**:
   - Telnet protocol handling and negotiation
   - EUC-KR to UTF-8 encoding conversion
@@ -33,13 +47,31 @@ The project consists of two main components:
 
 ### Frontend (React Application)
 - **Location**: `frontend-react/`
-- **Purpose**: Modern web interface for MUD interaction
+- **Purpose**: Modern web interface for MUD interaction (works in both web and Electron)
 - **Features**:
   - xterm.js terminal emulation
   - Command input with history
   - Server selection dropdown
   - Connection status monitoring
   - Event logging panel
+  - Macros & triggers system
+
+### Electron App (Desktop Version)
+- **Location**: `electron-app/`
+- **Purpose**: Desktop application that provides native Windows app experience
+- **Features**:
+  - Direct MUD server connection (no proxy needed)
+  - Native desktop window management
+  - Same React frontend as web version
+  - Windows installer and app registration
+
+### Shared Modules
+- **Location**: `shared/`
+- **Purpose**: Common code shared between web and desktop versions
+- **Features**:
+  - MUD connection management with Telnet protocol support
+  - Communication abstraction layer
+  - Environment detection utilities
 
 ## Getting Started
 
@@ -69,6 +101,8 @@ The project consists of two main components:
 
 ### Running the Application
 
+#### Web Version
+
 1. **Start the backend server**:
    ```bash
    cd backend
@@ -91,6 +125,26 @@ The project consists of two main components:
    node src/server.js
    ```
    Then visit `http://localhost:8080`
+
+#### Desktop Version (Electron)
+
+1. **Build the React frontend**:
+   ```bash
+   npm run build
+   ```
+
+2. **Start the Electron app**:
+   ```bash
+   cd electron-app
+   npm run dev
+   ```
+
+3. **Build for distribution**:
+   ```bash
+   cd electron-app
+   npm run dist
+   ```
+   This creates a Windows installer in `electron-app/release/`
 
 ## Usage
 

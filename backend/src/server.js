@@ -1,16 +1,12 @@
-import net from 'node:net';
 import { WebSocketServer } from 'ws';
-import iconv from 'iconv-lite';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MudConnection, TARGET_HOST, TARGET_PORTS } from '../../shared/mud-connection.js';
 
 // Basic config: hard-coded MUD host + dual ports with fallback (user requested)
 const PORT = process.env.PORT || 8080; // WebSocket & static hosting port (still overridable)
-const TARGET_HOST = 'dangunland.iptime.org';
-const TARGET_PORTS = [5002, 5003]; // Attempt order
-const ENCODING = 'euc-kr'; // For INPUT encoding only (output stays raw)
 
 // Resolve project root (server.js is backend/src/server.js -> go up two levels)
 const __filename = fileURLToPath(import.meta.url);
@@ -144,79 +140,62 @@ function handleNegotiation(cmd, opt, socket) {
 }
 
 wss.on('connection', (ws) => {
-  const sessionLog = [];
-  let activeSocket = null;
-  let connectedPort = null;
+  let mudConnection = null;
   let closed = false;
-  let pendingPort = null;
 
   // Wait for explicit connect request
   ws.on('message', (msg, isBinary) => {
     if (isBinary) return;
     try {
       const obj = JSON.parse(msg.toString());
-      if ((obj.t === 'switchPort' || obj.t === 'connect') && obj.port && TARGET_PORTS.includes(obj.port)) {
-        if (activeSocket) activeSocket.destroy();
-        pendingPort = obj.port;
-        connectToMud(obj.port);
-      } else if (obj.t === 'input' && activeSocket) {
-        const out = iconv.encode(obj.data, ENCODING);
-        activeSocket.write(out);
-      } else if (obj.t === 'resize' && obj.cols && obj.rows && activeSocket) {
-        const cols = obj.cols;
-        const rows = obj.rows;
-        const naws = Buffer.from([
-          IAC, SB, OPT_NAWS,
-          (cols >> 8) & 0xff, cols & 0xff,
-          (rows >> 8) & 0xff, rows & 0xff,
-          IAC, SE
-        ]);
-        activeSocket.write(naws);
-      } else if (obj.t === 'saveLog') {
-        sendJSON(ws, { t: 'log', data: sessionLog });
+      if ((obj.t === 'switchPort' || obj.t === 'connect') && obj.port) {
+        if (mudConnection) {
+          mudConnection.close();
+        }
+        
+        // Create new MUD connection
+        mudConnection = new MudConnection();
+        
+        // Set up event handlers
+        mudConnection.on('data', (data) => {
+          if (!closed && ws.readyState === ws.OPEN) {
+            ws.send(data);
+          }
+        });
+        
+        mudConnection.on('status', (status) => {
+          if (!closed && ws.readyState === ws.OPEN) {
+            sendJSON(ws, { t: 'status', data: status });
+          }
+        });
+        
+        mudConnection.on('error', (error) => {
+          if (!closed && ws.readyState === ws.OPEN) {
+            sendJSON(ws, { t: 'error', data: error });
+          }
+        });
+        
+        // Connect to the MUD server
+        mudConnection.connect(obj.port);
+        
+      } else if (obj.t === 'input' && mudConnection) {
+        mudConnection.sendInput(obj.data);
+      } else if (obj.t === 'resize' && obj.cols && obj.rows && mudConnection) {
+        mudConnection.sendResize(obj.cols, obj.rows);
+      } else if (obj.t === 'saveLog' && mudConnection) {
+        const log = mudConnection.getSessionLog();
+        sendJSON(ws, { t: 'log', data: log });
       }
     } catch {
       sendJSON(ws, { t: 'error', data: 'bad message' });
     }
   });
 
-  function connectToMud(port) {
-    if (closed) return;
-    sendJSON(ws, { t: 'status', data: `connecting:${TARGET_HOST}:${port}` });
-    const socket = net.createConnection(port, TARGET_HOST);
-    activeSocket = socket;
-    let connected = false;
-    socket.on('connect', () => {
-      connected = true;
-      connectedPort = port;
-      sendJSON(ws, { t: 'status', data: `connected:${TARGET_HOST}:${port}` });
-      sendInitialNegotiation(socket);
-    });
-    socket.on('error', (e) => {
-      if (!connected) {
-        sendJSON(ws, { t: 'error', data: `Failed to connect to port ${port}: ${e.message}` });
-      } else {
-        sendJSON(ws, { t: 'error', data: e.message });
-      }
-    });
-    socket.on('close', () => {
-      if (!closed) {
-        sendJSON(ws, { t: 'status', data: 'disconnect' });
-        ws.close();
-      }
-    });
-    socket.on('data', (buf) => {
-      sessionLog.push(buf.toString('hex'));
-      const cleaned = processTelnetData(buf, socket);
-      if (cleaned.length) {
-        ws.send(cleaned);
-      }
-    });
-  }
-
   ws.on('close', () => {
     closed = true;
-    if (activeSocket) activeSocket.destroy();
+    if (mudConnection) {
+      mudConnection.close();
+    }
   });
 });
 
