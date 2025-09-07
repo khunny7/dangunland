@@ -1,9 +1,0 @@
-{
-  "name": "dangunland-shared",
-  "version": "1.0.0",
-  "description": "Shared modules for DangunLand MUD Client",
-  "type": "module",
-  "dependencies": {
-    "iconv-lite": "0.6.3"
-  }
-}

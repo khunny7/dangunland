@@ -3,7 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MudConnection, TARGET_HOST, TARGET_PORTS } from '../../shared/mud-connection.js';
+import { MudConnection, TARGET_HOST, TARGET_PORTS } from './mud-connection.js';
 
 // Basic config: hard-coded MUD host + dual ports with fallback (user requested)
 const PORT = process.env.PORT || 8080; // WebSocket & static hosting port (still overridable)
