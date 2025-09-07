@@ -1,0 +1,45 @@
+{
+  "name": "dangunland-electron",
+  "version": "1.0.0",
+  "description": "Electron version of DangunLand MUD Client",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron .",
+    "build": "npm run build:frontend && npm run copy:frontend",
+    "build:frontend": "cd ../frontend-react && npm run build",
+    "copy:frontend": "mkdir -p ./dist && cp -r ../frontend-react/dist/* ./dist/",
+    "pack": "electron-builder",
+    "dist": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "com.khunny7.dangunland",
+    "productName": "DangunLand MUD Client",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "iconv-lite": "0.6.3"
+  }
+}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
 import './App.css';
+import { createCommunicationAdapter, isElectron } from '../../shared/communication.js';
 
 // Macro Manager Component
 function MacroManager({ macros, onAdd, onEdit, onDelete }) {
@@ -282,16 +283,8 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
   );
 }
 
-// Dynamically determine WebSocket host
-const getWebSocketHost = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'localhost:8080'; // local development
-  }
-  return window.location.host; // production (Azure)
-};
-
-const MUD_HOST = getWebSocketHost();
-const WS_PATH = '/ws';
+// Environment detection
+const isElectronEnv = isElectron();
 
 function useStableCallback(cb) {
   const ref = useRef(cb);
@@ -302,7 +295,7 @@ function useStableCallback(cb) {
 function App() {
   const termRef = useRef(null);
   const xtermRef = useRef(null);
-  const wsRef = useRef(null);
+  const commRef = useRef(null); // Communication adapter
   const [status, setStatus] = useState('Disconnected');
   const [selectedPort, setSelectedPort] = useState('5002');
   const [activePort, setActivePort] = useState(null);
@@ -454,6 +447,51 @@ function App() {
     };
   }, []);
 
+  // Initialize communication adapter
+  useEffect(() => {
+    const comm = createCommunicationAdapter();
+    commRef.current = comm;
+
+    // Set up event listeners
+    comm.on('data', (text) => {
+      if (xtermRef.current) {
+        try {
+          // Process triggers before displaying text
+          processTriggers(text);
+          
+          // Convert \n\r to \r\n for better terminal compatibility
+          const normalizedText = text.replace(/\n\r/g, '\r\n');
+          xtermRef.current.write(normalizedText);
+          
+          // Force terminal refresh only if the method exists
+          if (typeof xtermRef.current.refresh === 'function') {
+            xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+          }
+        } catch (error) {
+          console.error('Error writing to terminal:', error);
+        }
+      }
+    });
+
+    comm.on('status', (statusMsg) => {
+      writeStatus(statusMsg);
+      interpretStatus(statusMsg);
+    });
+
+    comm.on('error', (errorMsg) => {
+      writeStatus('ERROR: ' + errorMsg);
+    });
+
+    comm.on('log', (logData) => {
+      downloadText(logData.join('\n'), 'session-log-hex.txt');
+    });
+
+    return () => {
+      comm.close();
+      comm.removeAllListeners();
+    };
+  }, []);
+
   // Heartbeat functions - defined before they are used
   const stopHeartbeat = useCallback(() => {
     if (heartbeatTimerRef.current) {
@@ -466,13 +504,13 @@ function App() {
     stopHeartbeat(); // Clear any existing timer
     if (heartbeatEnabled && heartbeatInterval > 0) {
       heartbeatTimerRef.current = setInterval(() => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        if (commRef.current && commRef.current.getStatus() === 'connected') {
           const now = Date.now();
           const timeSinceLastInput = (now - lastInputTimeRef.current) / 1000; // seconds
           
           // Only send heartbeat if user has been idle for the configured interval
           if (timeSinceLastInput >= heartbeatInterval) {
-            wsRef.current.send(JSON.stringify({ t: 'input', data: '\n' }));
+            commRef.current.sendInput('\n');
             console.log(`Heartbeat sent after ${Math.round(timeSinceLastInput)}s of inactivity`);
           }
         }
@@ -482,7 +520,7 @@ function App() {
 
   // Effect to restart heartbeat when settings change
   useEffect(() => {
-    if (activePort && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (activePort && commRef.current && commRef.current.getCurrentPort()) {
       startHeartbeat();
     }
     return () => stopHeartbeat();
@@ -540,8 +578,8 @@ function App() {
 
   const connect = useCallback(() => {
     console.log('Connect button clicked');
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
+    if (commRef.current) {
+      commRef.current.close();
     }
     setStatus('Connecting...');
     pushEvent('ui:connect-click');
@@ -555,77 +593,11 @@ function App() {
       xtermRef.current.write('Connecting to MUD server...\r\n');
     }
     
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${MUD_HOST}${WS_PATH}`;
-    console.log('Attempting to connect to:', wsUrl);
-    const ws = new WebSocket(wsUrl);
-    ws.binaryType = 'arraybuffer';
-    wsRef.current = ws;
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      setStatus('WebSocket Open');
-      pushEvent('ws:open');
-      ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(selectedPort, 10) }));
-      startHeartbeat();
-    };
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-      setStatus('Disconnected');
-      pushEvent('ws:close');
-      setActivePort(null);
-      stopHeartbeat();
-    };
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setStatus('Error');
-      pushEvent('ws:error');
-    };
-    ws.onmessage = ev => {
-      if (typeof ev.data === 'string') {
-        try {
-          const obj = JSON.parse(ev.data);
-          if (obj.t === 'status') {
-            writeStatus(obj.data);
-            interpretStatus(obj.data);
-          } else if (obj.t === 'error') {
-            writeStatus('ERROR: ' + obj.data);
-          } else if (obj.t === 'log') {
-            downloadText(obj.data.join('\n'), 'session-log-hex.txt');
-          }
-        } catch {
-          // Not JSON -> ignore
-        }
-      } else {
-        const u8 = new Uint8Array(ev.data);
-        const text = decoderRef.current.decode(u8, { stream: true });
-        console.log('Received text from MUD:', JSON.stringify(text));
-        console.log('Terminal ref available:', !!xtermRef.current);
-        if (text && xtermRef.current && typeof xtermRef.current.write === 'function') {
-          try {
-            // Process triggers before displaying text
-            processTriggers(text);
-            
-            // Convert \n\r to \r\n for better terminal compatibility
-            const normalizedText = text.replace(/\n\r/g, '\r\n');
-            console.log('Writing to terminal:', normalizedText.length, 'characters');
-            console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
-            xtermRef.current.write(normalizedText);
-            // Force terminal refresh only if the method exists
-            if (typeof xtermRef.current.refresh === 'function') {
-              xtermRef.current.refresh(0, xtermRef.current.rows - 1);
-            }
-          } catch (error) {
-            console.error('Error writing to terminal:', error);
-          }
-        } else {
-          console.warn('Cannot write to terminal:', { 
-            hasText: !!text, 
-            hasTerminal: !!xtermRef.current,
-            hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
-          });
-        }
-      }
-    };
-  }, [selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat]);
+    // Use communication adapter to connect
+    if (commRef.current) {
+      commRef.current.connect(parseInt(selectedPort, 10));
+    }
+  }, [selectedPort, pushEvent]);
 
   // Trigger processing helper
   const processTriggers = useCallback((text) => {
@@ -651,11 +623,10 @@ function App() {
           }
         }
         
-        if (matches && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        if (matches && commRef.current && commRef.current.getCurrentPort()) {
           // Execute trigger command
           setTimeout(() => {
-            const payload = { t: 'input', data: trigger.command + '\n' };
-            wsRef.current.send(JSON.stringify(payload));
+            commRef.current.sendInput(trigger.command + '\n');
             console.log(`Trigger fired: "${trigger.name}" -> "${trigger.command}"`);
           }, trigger.delay || 0);
         }
@@ -699,9 +670,8 @@ function App() {
     }
     historyIndexRef.current = -1;
     
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      const payload = { t: 'input', data: dataToSend };
-      wsRef.current.send(JSON.stringify(payload));
+    if (commRef.current && commRef.current.getCurrentPort()) {
+      commRef.current.sendInput(dataToSend);
       setInputValue('');
     }
     // refocus input
@@ -718,8 +688,8 @@ function App() {
   };
 
   const saveLog = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ t: 'saveLog' }));
+    if (commRef.current && commRef.current.getCurrentPort()) {
+      commRef.current.requestLog();
     }
   };
 
@@ -729,10 +699,9 @@ function App() {
     if (e.key.startsWith('F') && /^F([1-9]|1[0-2])$/.test(e.key)) {
       const functionKey = e.key;
       const macro = macros.find(m => m.type === 'function' && m.trigger === functionKey);
-      if (macro && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      if (macro && commRef.current && commRef.current.getCurrentPort()) {
         e.preventDefault();
-        const payload = { t: 'input', data: macro.command + '\n' };
-        wsRef.current.send(JSON.stringify(payload));
+        commRef.current.sendInput(macro.command + '\n');
         console.log(`Function key macro fired: ${functionKey} -> ${macro.command}`);
         return true;
       }
