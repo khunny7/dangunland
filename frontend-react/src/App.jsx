@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 import './App.css';
-import { createCommunicationAdapter, isElectron } from '../../shared/communication.js';
+import { createCommunicationAdapter } from './communication.js';
 
 // Macro Manager Component
 function MacroManager({ macros, onAdd, onEdit, onDelete }) {
@@ -283,9 +283,6 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
   );
 }
 
-// Environment detection
-const isElectronEnv = isElectron();
-
 function useStableCallback(cb) {
   const ref = useRef(cb);
   ref.current = cb;
@@ -487,11 +484,8 @@ function App() {
     });
 
     return () => {
-      // In Electron, don't close the connection on cleanup to avoid issues
-      // The main process manages the connection lifecycle
-      if (!isElectron()) {
-        comm.close();
-      }
+      // Close the connection and clean up
+      comm.close();
       comm.removeAllListeners();
     };
   }, []);
