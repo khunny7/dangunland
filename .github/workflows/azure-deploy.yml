@@ -26,11 +26,6 @@ jobs:
       - name: Install root dependencies
         run: npm install
 
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
-
       - name: Install frontend dependencies and build
         run: |
           cd frontend-react
@@ -41,8 +36,9 @@ jobs:
         run: |
           # Copy built frontend to backend for serving
           cp -r frontend-react/dist backend/
-          # Create a production package.json in backend
+          # Install production dependencies in backend
           cd backend
+          npm ci --only=production
           npm pkg set scripts.start="node src/server.js"
           
       - name: Upload artifact for deployment job
