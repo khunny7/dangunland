@@ -23,35 +23,17 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install root dependencies
-        run: npm install
-
-      - name: Install frontend dependencies and build
+      - name: npm install, build, and test
         run: |
-          cd frontend-react
           npm install
-          npm run build
+          npm run build --if-present
+          npm run test --if-present
 
-      - name: Prepare backend for deployment
-        run: |
-          # Copy built frontend to backend for serving
-          cp -r frontend-react/dist backend/
-          # Install production dependencies in backend
-          cd backend
-          npm ci --production
-          # Verify dependencies are installed
-          echo "Checking if ws package is installed:"
-          ls -la node_modules/ | grep ws || echo "ws not found in node_modules"
-          echo "Checking package.json:"
-          cat package.json
-          # Ensure the start script is correct for deployed environment
-          npm pkg set scripts.start="node src/server.js"
-          
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: backend/
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -80,5 +62,4 @@ jobs:
           app-name: 'dangunland'
           slot-name: 'Production'
           package: .
-          startup-command: 'npm start'
           
