@@ -13,9 +13,8 @@
   "scripts": {
     "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend-react run dev\"",
     "build": "npm --workspace frontend-react run build",
-    "start": "npm run build && node backend/src/server.js",
-    "install-all": "npm install && npm --workspace backend install && npm --workspace frontend-react install",
-    "deploy": "npm run build && npm start"
+    "start": "node backend/src/server.js",
+    "install-all": "npm install && npm --workspace backend install && npm --workspace frontend-react install"
   },
   "keywords": [
     "mud",
