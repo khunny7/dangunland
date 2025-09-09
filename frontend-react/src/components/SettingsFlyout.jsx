@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SettingsFlyout.css';
 
 const SettingsFlyout = ({ 
@@ -20,6 +21,8 @@ const SettingsFlyout = ({
   deleteTrigger,
   toggleTrigger
 }) => {
+  const { t } = useTranslation();
+  
   if (!isOpen) return null;
 
   return (
@@ -32,7 +35,7 @@ const SettingsFlyout = ({
         {/* Header */}
         <div className="flyout-header">
           <div className="header-content">
-            <h2 className="flyout-title">⚙️ TERMINAL SETTINGS</h2>
+            <h2 className="flyout-title">⚙️ {t('settings.title')}</h2>
             <button className="close-button" onClick={onClose}>
               ✕
             </button>
@@ -46,21 +49,21 @@ const SettingsFlyout = ({
             onClick={() => setActiveTab('general')}
           >
             <span className="tab-icon">🔧</span>
-            General
+            {t('settings.general')}
           </button>
           <button 
             className={`tab-button ${activeTab === 'macros' ? 'active' : ''}`}
             onClick={() => setActiveTab('macros')}
           >
             <span className="tab-icon">⚡</span>
-            Macros ({macros.length})
+            {t('settings.macros')} ({macros.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'triggers' ? 'active' : ''}`}
             onClick={() => setActiveTab('triggers')}
           >
             <span className="tab-icon">🎯</span>
-            Triggers ({triggers.filter(t => t.enabled).length}/{triggers.length})
+            {t('settings.triggers')} ({triggers.filter(t => t.enabled).length}/{triggers.length})
           </button>
         </div>
         
@@ -69,10 +72,10 @@ const SettingsFlyout = ({
           {/* General Settings Tab */}
           {activeTab === 'general' && (
             <div className="settings-section">
-              <h3 className="section-title">Connection & Behavior</h3>
+              <h3 className="section-title">{t('settings.connectionBehavior')}</h3>
               
               <div className="setting-group">
-                <label className="setting-label">
+                <label className="setting-label horizontal">
                   <input
                     type="checkbox"
                     checked={heartbeatEnabled}
@@ -80,8 +83,8 @@ const SettingsFlyout = ({
                     className="setting-checkbox"
                   />
                   <span className="label-text">
-                    <strong>Auto-Heartbeat</strong>
-                    <small>Prevent connection timeout when idle</small>
+                    <strong>{t('settings.autoHeartbeat')}</strong>
+                    <small>{t('settings.preventTimeout')}</small>
                   </span>
                 </label>
               </div>
@@ -90,8 +93,8 @@ const SettingsFlyout = ({
                 <div className="setting-group">
                   <label className="setting-label">
                     <span className="label-text">
-                      <strong>Heartbeat Interval: {heartbeatInterval}s</strong>
-                      <small>Send keepalive after this many seconds of inactivity</small>
+                      <strong>{t('settings.heartbeatInterval')}: {heartbeatInterval}s</strong>
+                      <small>{t('settings.heartbeatIntervalDesc')}</small>
                     </span>
                     <input
                       type="range"
@@ -107,12 +110,12 @@ const SettingsFlyout = ({
               )}
 
               <div className="info-panel">
-                <h4>💡 Pro Tips</h4>
+                <h4>{t('settings.proTips')}</h4>
                 <ul>
-                  <li>Use <kbd>F1-F12</kbd> keys for function key macros</li>
-                  <li>Triggers can auto-respond to server messages</li>
-                  <li>Up/Down arrows browse command history</li>
-                  <li>Heartbeat prevents idle disconnection</li>
+                  <li>{t('settings.tip1')}</li>
+                  <li>{t('settings.tip2')}</li>
+                  <li>{t('settings.tip3')}</li>
+                  <li>{t('settings.tip4')}</li>
                 </ul>
               </div>
             </div>
@@ -146,6 +149,7 @@ const SettingsFlyout = ({
 
 // Macro Manager Component
 function MacroManager({ macros, onAdd, onEdit, onDelete }) {
+  const { t } = useTranslation();
   const [newMacro, setNewMacro] = useState({ name: '', type: 'alias', trigger: '', command: '' });
   const [editingId, setEditingId] = useState(null);
 
@@ -175,9 +179,9 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
   return (
     <div className="manager-container">
       <div className="manager-header">
-        <h3>Macro Management</h3>
+        <h3>{t('macros.title')}</h3>
         <div className="help-text">
-          Create aliases and function key shortcuts for quick command execution.
+          {t('macros.description')}
         </div>
       </div>
 
@@ -185,7 +189,7 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
         <div className="form-row">
           <input
             type="text"
-            placeholder="Macro name"
+            placeholder={t('macros.desc')}
             value={newMacro.name}
             onChange={e => setNewMacro(prev => ({ ...prev, name: e.target.value }))}
             className="form-input"
@@ -195,8 +199,8 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
             onChange={e => setNewMacro(prev => ({ ...prev, type: e.target.value, trigger: '' }))}
             className="form-select"
           >
-            <option value="alias">Text Alias</option>
-            <option value="function">Function Key</option>
+            <option value="alias">{t('macros.textAlias')}</option>
+            <option value="function">{t('macros.functionKey')}</option>
           </select>
         </div>
 
@@ -204,7 +208,7 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
           {newMacro.type === 'alias' ? (
             <input
               type="text"
-              placeholder="Trigger text (e.g., 'heal')"
+              placeholder={t('macros.keyPlaceholder')}
               value={newMacro.trigger}
               onChange={e => setNewMacro(prev => ({ ...prev, trigger: e.target.value }))}
               className="form-input"
@@ -215,7 +219,7 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
               onChange={e => setNewMacro(prev => ({ ...prev, trigger: e.target.value }))}
               className="form-select"
             >
-              <option value="">Select Function Key</option>
+              <option value="">{t('macros.key')} 선택</option>
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i} value={`F${i + 1}`}>F{i + 1}</option>
               ))}
@@ -223,7 +227,7 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
           )}
           <input
             type="text"
-            placeholder="Command to execute"
+            placeholder={t('macros.commandPlaceholder')}
             value={newMacro.command}
             onChange={e => setNewMacro(prev => ({ ...prev, command: e.target.value }))}
             className="form-input"
@@ -233,11 +237,11 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
 
         <div className="form-buttons">
           <button type="submit" className="retro-button">
-            {editingId !== null ? 'Update' : 'Add'} Macro
+            {editingId !== null ? t('macros.edit') : t('macros.add')}
           </button>
           {editingId !== null && (
             <button type="button" onClick={cancelEdit} className="retro-button">
-              Cancel
+              {t('common.cancel')}
             </button>
           )}
         </div>
@@ -255,16 +259,16 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
             </div>
             <div className="macro-actions">
               <button onClick={() => startEdit(macro)} className="retro-button small">
-                Edit
+                {t('common.edit')}
               </button>
               <button onClick={() => onDelete(macro.id)} className="retro-button small danger">
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
         ))}
         {macros.length === 0 && (
-          <div className="empty-state">No macros configured. Add your first macro above!</div>
+          <div className="empty-state">{t('macros.noMacros')}</div>
         )}
       </div>
     </div>
@@ -273,6 +277,7 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
 
 // Trigger Manager Component
 function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
+  const { t } = useTranslation();
   const [newTrigger, setNewTrigger] = useState({ 
     name: '', 
     type: 'contains', 
@@ -314,9 +319,9 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
   return (
     <div className="manager-container">
       <div className="manager-header">
-        <h3>Trigger Management</h3>
+        <h3>{t('triggers.title')}</h3>
         <div className="help-text">
-          Automatically execute commands when specific text patterns are received from the server.
+          {t('triggers.description')}
         </div>
       </div>
 
@@ -324,7 +329,7 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
         <div className="form-row">
           <input
             type="text"
-            placeholder="Trigger name"
+            placeholder={t('triggers.desc')}
             value={newTrigger.name}
             onChange={e => setNewTrigger(prev => ({ ...prev, name: e.target.value }))}
             className="form-input"
@@ -334,16 +339,16 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
             onChange={e => setNewTrigger(prev => ({ ...prev, type: e.target.value }))}
             className="form-select"
           >
-            <option value="contains">Contains Text</option>
-            <option value="exact">Exact Match</option>
-            <option value="regex">Regular Expression</option>
+            <option value="contains">{t('triggers.containsText')}</option>
+            <option value="exact">{t('triggers.exactMatch')}</option>
+            <option value="regex">{t('triggers.regularExpression')}</option>
           </select>
         </div>
 
         <div className="form-row">
           <input
             type="text"
-            placeholder={`Pattern to match (${newTrigger.type})`}
+            placeholder={t('triggers.patternPlaceholder')}
             value={newTrigger.pattern}
             onChange={e => setNewTrigger(prev => ({ ...prev, pattern: e.target.value }))}
             className="form-input"
@@ -351,7 +356,7 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
           />
           <input
             type="text"
-            placeholder="Command to execute"
+            placeholder={t('triggers.commandPlaceholder')}
             value={newTrigger.command}
             onChange={e => setNewTrigger(prev => ({ ...prev, command: e.target.value }))}
             className="form-input"
@@ -361,7 +366,7 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
 
         <div className="form-row">
           <label className="delay-label">
-            Delay: {newTrigger.delay}ms
+            {t('triggers.delay')}: {newTrigger.delay}ms
             <input
               type="range"
               min="0"
@@ -376,11 +381,11 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
 
         <div className="form-buttons">
           <button type="submit" className="retro-button">
-            {editingId !== null ? 'Update' : 'Add'} Trigger
+            {editingId !== null ? t('triggers.edit') : t('triggers.add')}
           </button>
           {editingId !== null && (
             <button type="button" onClick={cancelEdit} className="retro-button">
-              Cancel
+              {t('common.cancel')}
             </button>
           )}
         </div>
@@ -407,16 +412,16 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
             </div>
             <div className="trigger-actions">
               <button onClick={() => startEdit(trigger)} className="retro-button small">
-                Edit
+                {t('common.edit')}
               </button>
               <button onClick={() => onDelete(trigger.id)} className="retro-button small danger">
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
         ))}
         {triggers.length === 0 && (
-          <div className="empty-state">No triggers configured. Add your first trigger above!</div>
+          <div className="empty-state">{t('triggers.noTriggers')}</div>
         )}
       </div>
     </div>

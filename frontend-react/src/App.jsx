@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
 import './App.css';
 import Logo from './components/Logo';
 import SettingsFlyout from './components/SettingsFlyout';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 
 
@@ -27,10 +29,11 @@ function useStableCallback(cb) {
 }
 
 function App() {
+  const { t } = useTranslation();
   const termRef = useRef(null);
   const xtermRef = useRef(null);
   const wsRef = useRef(null);
-  const [status, setStatus] = useState('Disconnected');
+  const [status, setStatus] = useState('disconnected');
   const [selectedPort, setSelectedPort] = useState('5002');
   const [activePort, setActivePort] = useState(null);
   const [inputValue, setInputValue] = useState('');
@@ -117,6 +120,21 @@ function App() {
     localStorage.setItem('mudClientTriggers', JSON.stringify(triggers));
   }, [triggers]);
 
+  // Terminal initialization helper
+  const initializeTerminalContent = useCallback((term) => {
+    try {
+      // Retro terminal startup message
+      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
+      term.write(`\x1b[32m║      ${t('terminal.title').padStart(36).padEnd(59)}║\x1b[0m\r\n`);
+      term.write(`\x1b[32m║      ${t('terminal.systemReady').padStart(36).padEnd(52)}║\x1b[0m\r\n`);
+      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
+      term.write('\r\n');
+      term.write(`\x1b[33m${t('terminal.selectAndConnect')}\x1b[0m\r\n`);
+    } catch (error) {
+      console.warn('Error writing to terminal:', error);
+    }
+  }, [t]);
+
   useEffect(() => {
     if (!termRef.current) return;
     
@@ -179,7 +197,7 @@ function App() {
         console.warn('Terminal disposal error:', error);
       }
     };
-  }, []);
+  }, [initializeTerminalContent]);
 
   // Heartbeat functions - defined before they are used
   const stopHeartbeat = useCallback(() => {
@@ -215,20 +233,6 @@ function App() {
     return () => stopHeartbeat();
   }, [heartbeatEnabled, heartbeatInterval, startHeartbeat, stopHeartbeat, activePort]);
 
-  const initializeTerminalContent = (term) => {
-    try {
-      // Retro terminal startup message
-      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
-      term.write('\x1b[32m║                        DANGUN TERMINAL v1.0                         ║\x1b[0m\r\n');
-      term.write('\x1b[32m║                     System Ready - Awaiting Connection              ║\x1b[0m\r\n');
-      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
-      term.write('\r\n');
-      term.write('\x1b[33m> Select a server and click CONNECT to begin...\x1b[0m\r\n');
-    } catch (error) {
-      console.warn('Error writing to terminal:', error);
-    }
-  };
-
   const writeStatus = useCallback(line => {
     console.log('Writing status to terminal:', line);
     console.log('Terminal ref available for status:', !!xtermRef.current);
@@ -253,10 +257,10 @@ function App() {
       const port = parts[2];
       if (state === 'connected') {
         setActivePort(port);
-        setStatus(`Connected (port ${port})`);
+        setStatus(`connected:${port}`);
         pushEvent('mud:connected:' + port);
       } else if (state === 'connecting') {
-        setStatus(`Connecting (port ${port})...`);
+        setStatus(`connecting:${port}`);
         pushEvent('mud:connecting:' + port);
       }
     }
@@ -301,94 +305,115 @@ function App() {
     }
   }, [triggers]);
 
-  const connect = useCallback(() => {
-    console.log('Connect button clicked');
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
-    }
-    setStatus('Connecting...');
-    pushEvent('ui:connect-click');
+  const toggleConnection = useCallback(() => {
+    // Check if currently connected or connecting
+    const isConnected = status.startsWith('connected:');
+    const isConnecting = status.startsWith('connecting:');
     
-    // Reset last input time when connecting
-    lastInputTimeRef.current = Date.now();
-    
-    // Clear terminal before connecting
-    if (xtermRef.current) {
-      xtermRef.current.clear();
-      xtermRef.current.write('Connecting to MUD server...\r\n');
-    }
-    
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${MUD_HOST}${WS_PATH}`;
-    console.log('Attempting to connect to:', wsUrl);
-    const ws = new WebSocket(wsUrl);
-    ws.binaryType = 'arraybuffer';
-    wsRef.current = ws;
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      setStatus('WebSocket Open');
-      pushEvent('ws:open');
-      ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(selectedPort, 10) }));
-      startHeartbeat();
-    };
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-      setStatus('Disconnected');
-      pushEvent('ws:close');
+    if (isConnected || isConnecting) {
+      // Disconnect
+      console.log('Disconnect button clicked');
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+      setStatus('disconnected');
       setActivePort(null);
       stopHeartbeat();
-    };
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setStatus('Error');
-      pushEvent('ws:error');
-    };
-    ws.onmessage = ev => {
-      if (typeof ev.data === 'string') {
-        try {
-          const obj = JSON.parse(ev.data);
-          if (obj.t === 'status') {
-            writeStatus(obj.data);
-            interpretStatus(obj.data);
-          } else if (obj.t === 'error') {
-            writeStatus('ERROR: ' + obj.data);
-          } else if (obj.t === 'log') {
-            downloadText(obj.data.join('\n'), 'session-log-hex.txt');
-          }
-        } catch {
-          // Not JSON -> ignore
-        }
-      } else {
-        const u8 = new Uint8Array(ev.data);
-        const text = decoderRef.current.decode(u8, { stream: true });
-        console.log('Received text from MUD:', JSON.stringify(text));
-        console.log('Terminal ref available:', !!xtermRef.current);
-        if (text && xtermRef.current && typeof xtermRef.current.write === 'function') {
+      pushEvent('ui:disconnect-click');
+      
+      if (xtermRef.current) {
+        xtermRef.current.write(`\r\n\x1b[33m${t('terminal.disconnected')}\x1b[0m\r\n`);
+      }
+    } else {
+      // Connect
+      console.log('Connect button clicked');
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+      setStatus('connecting');
+      pushEvent('ui:connect-click');
+      
+      // Reset last input time when connecting
+      lastInputTimeRef.current = Date.now();
+      
+      // Clear terminal before connecting
+      if (xtermRef.current) {
+        xtermRef.current.clear();
+        xtermRef.current.write(`${t('terminal.connectingToServer')}\r\n`);
+      }
+      
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${MUD_HOST}${WS_PATH}`;
+      console.log('Attempting to connect to:', wsUrl);
+      const ws = new WebSocket(wsUrl);
+      ws.binaryType = 'arraybuffer';
+      wsRef.current = ws;
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        setStatus('connected');
+        pushEvent('ws:open');
+        ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(selectedPort, 10) }));
+        startHeartbeat();
+      };
+      ws.onclose = () => {
+        console.log('WebSocket closed');
+        setStatus('disconnected');
+        pushEvent('ws:close');
+        setActivePort(null);
+        stopHeartbeat();
+      };
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setStatus('connectionError');
+        pushEvent('ws:error');
+      };
+      ws.onmessage = ev => {
+        if (typeof ev.data === 'string') {
           try {
-            // Process triggers before displaying text
-            processTriggers(text);
-            
-            // Convert \n\r to \r\n for better terminal compatibility
-            const normalizedText = text.replace(/\n\r/g, '\r\n');
-            console.log('Writing to terminal:', normalizedText.length, 'characters');
-            console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
-            xtermRef.current.write(normalizedText);
-            // Force terminal refresh only if the method exists
-            if (typeof xtermRef.current.refresh === 'function') {
-              xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+            const obj = JSON.parse(ev.data);
+            if (obj.t === 'status') {
+              writeStatus(obj.data);
+              interpretStatus(obj.data);
+            } else if (obj.t === 'error') {
+              writeStatus('ERROR: ' + obj.data);
+            } else if (obj.t === 'log') {
+              downloadText(obj.data.join('\n'), 'session-log-hex.txt');
             }
-          } catch (error) {
-            console.error('Error writing to terminal:', error);
+          } catch {
+            // Not JSON -> ignore
           }
         } else {
-          console.warn('Cannot write to terminal:', { 
-            hasText: !!text, 
-            hasTerminal: !!xtermRef.current,
-            hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
-          });
+          const u8 = new Uint8Array(ev.data);
+          const text = decoderRef.current.decode(u8, { stream: true });
+          console.log('Received text from MUD:', JSON.stringify(text));
+          console.log('Terminal ref available:', !!xtermRef.current);
+          if (text && xtermRef.current && typeof xtermRef.current.write === 'function') {
+            try {
+              // Process triggers before displaying text
+              processTriggers(text);
+              
+              // Convert \n\r to \r\n for better terminal compatibility
+              const normalizedText = text.replace(/\n\r/g, '\r\n');
+              console.log('Writing to terminal:', normalizedText.length, 'characters');
+              console.log('Normalized text sample:', JSON.stringify(normalizedText.substring(0, 100)));
+              xtermRef.current.write(normalizedText);
+              // Force terminal refresh only if the method exists
+              if (typeof xtermRef.current.refresh === 'function') {
+                xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+              }
+            } catch (error) {
+              console.error('Error writing to terminal:', error);
+            }
+          } else {
+            console.warn('Cannot write to terminal:', { 
+              hasText: !!text, 
+              hasTerminal: !!xtermRef.current,
+              hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
+            });
+          }
         }
-      }
-    };
-  }, [selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat, processTriggers]);
+      };
+    }
+  }, [status, selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat, processTriggers, t]);
 
   // Macro expansion helper
   const expandMacros = useCallback((input) => {
@@ -517,16 +542,31 @@ function App() {
     setTriggers(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
   };
 
+  const getStatusText = (status) => {
+    if (status.startsWith('connected:')) {
+      const port = status.split(':')[1];
+      return `${t('app.connected')} (port ${port})`;
+    }
+    if (status.startsWith('connecting:')) {
+      const port = status.split(':')[1];
+      return `${t('app.connecting')} (port ${port})...`;
+    }
+    return t(`app.${status}`) || status;
+  };
+
   return (
     <div className="app">
-      {/* Top-right Settings Button */}
-      <button 
-        className="top-settings-button"
-        onClick={() => setSettingsOpen(true)}
-        title="Settings"
-      >
-        ⚙️
-      </button>
+      {/* Top-right Controls */}
+      <div className="top-controls">
+        <LanguageSwitcher />
+        <button 
+          className="top-settings-button"
+          onClick={() => setSettingsOpen(true)}
+          title={t('settings.title')}
+        >
+          ⚙️
+        </button>
+      </div>
 
       {/* Computer Case */}
       <div className="computer-case">
@@ -543,12 +583,12 @@ function App() {
           <div className="menu-bar">
             <div className="app-logo-section">
               <Logo size={24} className="app-logo" />
-              <span className="app-title">DangunLand</span>
+              <span className="app-title">{t('app.title')}</span>
             </div>
             
             <div className="status-section">
               <span className={`status-light ${activePort ? 'connected' : ''}`}></span>
-              <span className="status-text">{status}</span>
+              <span className="status-text">{getStatusText(status)}</span>
             </div>
             
             <select 
@@ -560,23 +600,26 @@ function App() {
               <option value="5003">Server 2 (5003)</option>
             </select>
 
-            <button className="retro-button connect" onClick={connect}>
-              🔌 Connect
+            <button 
+              className={`retro-button ${status.startsWith('connected:') ? 'disconnect' : 'connect'}`} 
+              onClick={toggleConnection}
+            >
+              {status.startsWith('connected:') ? '🔌 ' + t('app.disconnect') : '🔌 ' + t('app.connect')}
             </button>
             
             <button className="retro-button" onClick={clearTerminal}>
-              Clear
+              {t('app.clear')}
             </button>
             
             <button className="retro-button" onClick={saveLog}>
-              Save Log
+              {t('app.saveLog')}
             </button>
             
             <button 
               className="retro-button" 
               onClick={() => setLogOpen(o => !o)}
             >
-              {logOpen ? 'Hide Log' : 'Show Log'}
+              {logOpen ? t('app.hideLog') : t('app.showLog')}
             </button>
           </div>
 
@@ -609,7 +652,7 @@ function App() {
                 }
               }
             }}
-            placeholder="Enter command..."
+            placeholder={t('terminal.placeholder')}
             spellCheck={false}
             autoComplete="off"
           />
@@ -617,9 +660,9 @@ function App() {
           {logOpen && (
             <div className="log-panel">
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-                <strong>CONNECTION LOG</strong>
+                <strong>{t('app.connectionLog')}</strong>
                 <button className="retro-button" onClick={() => setConnEvents([])} style={{fontSize: '10px', padding: '4px 8px'}}>
-                  Clear
+                  {t('app.clear')}
                 </button>
               </div>
               <div style={{maxHeight: '150px', overflowY: 'auto'}}>
