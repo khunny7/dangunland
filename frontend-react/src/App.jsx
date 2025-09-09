@@ -2,285 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
 import './App.css';
+import Logo from './components/Logo';
+import SettingsFlyout from './components/SettingsFlyout';
 
-// Macro Manager Component
-function MacroManager({ macros, onAdd, onEdit, onDelete }) {
-  const [newMacro, setNewMacro] = useState({ name: '', type: 'alias', trigger: '', command: '' });
-  const [editingId, setEditingId] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newMacro.name || !newMacro.trigger || !newMacro.command) return;
-    
-    if (editingId !== null) {
-      onEdit(editingId, newMacro);
-      setEditingId(null);
-    } else {
-      onAdd(newMacro);
-    }
-    setNewMacro({ name: '', type: 'alias', trigger: '', command: '' });
-  };
 
-  const startEdit = (macro) => {
-    setNewMacro({ name: macro.name, type: macro.type, trigger: macro.trigger, command: macro.command });
-    setEditingId(macro.id);
-  };
 
-  const cancelEdit = () => {
-    setNewMacro({ name: '', type: 'alias', trigger: '', command: '' });
-    setEditingId(null);
-  };
-
-  return (
-    <div className="manager-container">
-      <div className="manager-header">
-        <h3>Macro Management</h3>
-        <div className="help-text">
-          Create aliases and function key shortcuts for quick command execution.
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="macro-form">
-        <div className="form-row">
-          <input
-            type="text"
-            placeholder="Macro name"
-            value={newMacro.name}
-            onChange={e => setNewMacro(prev => ({ ...prev, name: e.target.value }))}
-            className="form-input"
-          />
-          <select
-            value={newMacro.type}
-            onChange={e => setNewMacro(prev => ({ ...prev, type: e.target.value, trigger: '' }))}
-            className="form-select"
-          >
-            <option value="alias">Text Alias</option>
-            <option value="function">Function Key</option>
-          </select>
-        </div>
-
-        <div className="form-row">
-          {newMacro.type === 'alias' ? (
-            <input
-              type="text"
-              placeholder="Trigger text (e.g., 'heal')"
-              value={newMacro.trigger}
-              onChange={e => setNewMacro(prev => ({ ...prev, trigger: e.target.value }))}
-              className="form-input"
-            />
-          ) : (
-            <select
-              value={newMacro.trigger}
-              onChange={e => setNewMacro(prev => ({ ...prev, trigger: e.target.value }))}
-              className="form-select"
-            >
-              <option value="">Select Function Key</option>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i} value={`F${i + 1}`}>F{i + 1}</option>
-              ))}
-            </select>
-          )}
-          <input
-            type="text"
-            placeholder="Command to execute"
-            value={newMacro.command}
-            onChange={e => setNewMacro(prev => ({ ...prev, command: e.target.value }))}
-            className="form-input"
-            style={{ flex: 2 }}
-          />
-        </div>
-
-        <div className="form-buttons">
-          <button type="submit" className="retro-button">
-            {editingId !== null ? 'Update' : 'Add'} Macro
-          </button>
-          {editingId !== null && (
-            <button type="button" onClick={cancelEdit} className="retro-button">
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-
-      <div className="macro-list">
-        {macros.map(macro => (
-          <div key={macro.id} className="macro-item">
-            <div className="macro-info">
-              <strong>{macro.name}</strong>
-              <span className="macro-type">({macro.type})</span>
-              <div className="macro-detail">
-                {macro.type === 'alias' ? `"${macro.trigger}"` : macro.trigger} → "{macro.command}"
-              </div>
-            </div>
-            <div className="macro-actions">
-              <button onClick={() => startEdit(macro)} className="retro-button small">
-                Edit
-              </button>
-              <button onClick={() => onDelete(macro.id)} className="retro-button small danger">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-        {macros.length === 0 && (
-          <div className="empty-state">No macros configured. Add your first macro above!</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Trigger Manager Component
-function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
-  const [newTrigger, setNewTrigger] = useState({ 
-    name: '', 
-    type: 'contains', 
-    pattern: '', 
-    command: '', 
-    delay: 0 
-  });
-  const [editingId, setEditingId] = useState(null);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newTrigger.name || !newTrigger.pattern || !newTrigger.command) return;
-    
-    if (editingId !== null) {
-      onEdit(editingId, newTrigger);
-      setEditingId(null);
-    } else {
-      onAdd(newTrigger);
-    }
-    setNewTrigger({ name: '', type: 'contains', pattern: '', command: '', delay: 0 });
-  };
-
-  const startEdit = (trigger) => {
-    setNewTrigger({ 
-      name: trigger.name, 
-      type: trigger.type, 
-      pattern: trigger.pattern, 
-      command: trigger.command, 
-      delay: trigger.delay || 0 
-    });
-    setEditingId(trigger.id);
-  };
-
-  const cancelEdit = () => {
-    setNewTrigger({ name: '', type: 'contains', pattern: '', command: '', delay: 0 });
-    setEditingId(null);
-  };
-
-  return (
-    <div className="manager-container">
-      <div className="manager-header">
-        <h3>Trigger Management</h3>
-        <div className="help-text">
-          Automatically execute commands when specific text patterns are received from the server.
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="trigger-form">
-        <div className="form-row">
-          <input
-            type="text"
-            placeholder="Trigger name"
-            value={newTrigger.name}
-            onChange={e => setNewTrigger(prev => ({ ...prev, name: e.target.value }))}
-            className="form-input"
-          />
-          <select
-            value={newTrigger.type}
-            onChange={e => setNewTrigger(prev => ({ ...prev, type: e.target.value }))}
-            className="form-select"
-          >
-            <option value="contains">Contains Text</option>
-            <option value="exact">Exact Match</option>
-            <option value="regex">Regular Expression</option>
-          </select>
-        </div>
-
-        <div className="form-row">
-          <input
-            type="text"
-            placeholder={`Pattern to match (${newTrigger.type})`}
-            value={newTrigger.pattern}
-            onChange={e => setNewTrigger(prev => ({ ...prev, pattern: e.target.value }))}
-            className="form-input"
-            style={{ flex: 2 }}
-          />
-          <input
-            type="text"
-            placeholder="Command to execute"
-            value={newTrigger.command}
-            onChange={e => setNewTrigger(prev => ({ ...prev, command: e.target.value }))}
-            className="form-input"
-            style={{ flex: 2 }}
-          />
-        </div>
-
-        <div className="form-row">
-          <label className="delay-label">
-            Delay: {newTrigger.delay}ms
-            <input
-              type="range"
-              min="0"
-              max="5000"
-              step="100"
-              value={newTrigger.delay}
-              onChange={e => setNewTrigger(prev => ({ ...prev, delay: parseInt(e.target.value) }))}
-              className="setting-slider"
-            />
-          </label>
-        </div>
-
-        <div className="form-buttons">
-          <button type="submit" className="retro-button">
-            {editingId !== null ? 'Update' : 'Add'} Trigger
-          </button>
-          {editingId !== null && (
-            <button type="button" onClick={cancelEdit} className="retro-button">
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-
-      <div className="trigger-list">
-        {triggers.map(trigger => (
-          <div key={trigger.id} className={`trigger-item ${trigger.enabled ? 'enabled' : 'disabled'}`}>
-            <div className="trigger-info">
-              <div className="trigger-header">
-                <strong>{trigger.name}</strong>
-                <span className="trigger-type">({trigger.type})</span>
-                <button 
-                  onClick={() => onToggle(trigger.id)}
-                  className={`toggle-btn ${trigger.enabled ? 'on' : 'off'}`}
-                >
-                  {trigger.enabled ? 'ON' : 'OFF'}
-                </button>
-              </div>
-              <div className="trigger-detail">
-                Pattern: "{trigger.pattern}" → Command: "{trigger.command}"
-                {trigger.delay > 0 && <span className="delay-info"> (Delay: {trigger.delay}ms)</span>}
-              </div>
-            </div>
-            <div className="trigger-actions">
-              <button onClick={() => startEdit(trigger)} className="retro-button small">
-                Edit
-              </button>
-              <button onClick={() => onDelete(trigger.id)} className="retro-button small danger">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-        {triggers.length === 0 && (
-          <div className="empty-state">No triggers configured. Add your first trigger above!</div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // Dynamically determine WebSocket host
 const getWebSocketHost = () => {
@@ -538,6 +265,42 @@ function App() {
     }
   }, [pushEvent]);
 
+  // Trigger processing helper
+  const processTriggers = useCallback((text) => {
+    // Check each line of text against triggers
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      for (const trigger of triggers) {
+        if (!trigger.enabled) continue;
+        
+        let matches = false;
+        if (trigger.type === 'exact') {
+          matches = line.trim() === trigger.pattern;
+        } else if (trigger.type === 'contains') {
+          matches = line.includes(trigger.pattern);
+        } else if (trigger.type === 'regex') {
+          try {
+            const regex = new RegExp(trigger.pattern, 'i');
+            matches = regex.test(line);
+          } catch {
+            console.warn('Invalid regex pattern:', trigger.pattern);
+          }
+        }
+        
+        if (matches && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          // Execute trigger command
+          setTimeout(() => {
+            const payload = { t: 'input', data: trigger.command + '\n' };
+            wsRef.current.send(JSON.stringify(payload));
+            console.log(`Trigger fired: "${trigger.name}" -> "${trigger.command}"`);
+          }, trigger.delay || 0);
+        }
+      }
+    }
+  }, [triggers]);
+
   const connect = useCallback(() => {
     console.log('Connect button clicked');
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -625,43 +388,7 @@ function App() {
         }
       }
     };
-  }, [selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat]);
-
-  // Trigger processing helper
-  const processTriggers = useCallback((text) => {
-    // Check each line of text against triggers
-    const lines = text.split(/\r?\n/);
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      
-      for (const trigger of triggers) {
-        if (!trigger.enabled) continue;
-        
-        let matches = false;
-        if (trigger.type === 'exact') {
-          matches = line.trim() === trigger.pattern;
-        } else if (trigger.type === 'contains') {
-          matches = line.includes(trigger.pattern);
-        } else if (trigger.type === 'regex') {
-          try {
-            const regex = new RegExp(trigger.pattern, 'i');
-            matches = regex.test(line);
-          } catch (e) {
-            console.warn('Invalid regex pattern:', trigger.pattern);
-          }
-        }
-        
-        if (matches && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          // Execute trigger command
-          setTimeout(() => {
-            const payload = { t: 'input', data: trigger.command + '\n' };
-            wsRef.current.send(JSON.stringify(payload));
-            console.log(`Trigger fired: "${trigger.name}" -> "${trigger.command}"`);
-          }, trigger.delay || 0);
-        }
-      }
-    }
-  }, [triggers]);
+  }, [selectedPort, pushEvent, writeStatus, interpretStatus, startHeartbeat, stopHeartbeat, processTriggers]);
 
   // Macro expansion helper
   const expandMacros = useCallback((input) => {
@@ -723,6 +450,13 @@ function App() {
     }
   };
 
+  const clearTerminal = () => {
+    if (xtermRef.current) {
+      xtermRef.current.clear();
+      xtermRef.current.write('\x1b[32m> Terminal cleared\x1b[0m\r\n');
+    }
+  };
+
   // Function key macro handler
   const handleFunctionKey = useCallback((e) => {
     // Check for function key macros (F1-F12)
@@ -745,18 +479,13 @@ function App() {
     const globalKeyHandler = (e) => {
       if (handleFunctionKey(e)) {
         e.preventDefault();
+        e.stopPropagation();
       }
     };
+
     document.addEventListener('keydown', globalKeyHandler);
     return () => document.removeEventListener('keydown', globalKeyHandler);
   }, [handleFunctionKey]);
-
-  const clearTerminal = () => {
-    if (xtermRef.current) {
-      xtermRef.current.clear();
-      xtermRef.current.write('\x1b[32m> Terminal cleared\x1b[0m\r\n');
-    }
-  };
 
   // Macro management functions
   const addMacro = (macro) => {
@@ -790,6 +519,15 @@ function App() {
 
   return (
     <div className="app">
+      {/* Top-right Settings Button */}
+      <button 
+        className="top-settings-button"
+        onClick={() => setSettingsOpen(true)}
+        title="Settings"
+      >
+        ⚙️
+      </button>
+
       {/* Computer Case */}
       <div className="computer-case">
         {/* Decorative Vent */}
@@ -803,6 +541,11 @@ function App() {
         {/* Control Panel */}
         <div className="control-panel">
           <div className="menu-bar">
+            <div className="app-logo-section">
+              <Logo size={24} className="app-logo" />
+              <span className="app-title">DangunLand</span>
+            </div>
+            
             <div className="status-section">
               <span className={`status-light ${activePort ? 'connected' : ''}`}></span>
               <span className="status-text">{status}</span>
@@ -834,13 +577,6 @@ function App() {
               onClick={() => setLogOpen(o => !o)}
             >
               {logOpen ? 'Hide Log' : 'Show Log'}
-            </button>
-            
-            <button 
-              className="retro-button" 
-              onClick={() => setSettingsOpen(o => !o)}
-            >
-              Settings
             </button>
           </div>
 
@@ -898,108 +634,26 @@ function App() {
         </div>
       </div>
 
-      {/* Settings Popup */}
-      {settingsOpen && (
-        <div className="settings-overlay" onClick={() => setSettingsOpen(false)}>
-          <div className="settings-popup" onClick={e => e.stopPropagation()}>
-            <div className="settings-header">
-              <strong>⚙️ TERMINAL SETTINGS</strong>
-              <button 
-                className="retro-button close-btn" 
-                onClick={() => setSettingsOpen(false)}
-                style={{fontSize: '10px', padding: '4px 8px'}}
-              >
-                ✕ Close
-              </button>
-            </div>
-            
-            {/* Tab Navigation */}
-            <div className="settings-tabs">
-              <button 
-                className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
-                onClick={() => setActiveTab('general')}
-              >
-                General
-              </button>
-              <button 
-                className={`tab-button ${activeTab === 'macros' ? 'active' : ''}`}
-                onClick={() => setActiveTab('macros')}
-              >
-                Macros ({macros.length})
-              </button>
-              <button 
-                className={`tab-button ${activeTab === 'triggers' ? 'active' : ''}`}
-                onClick={() => setActiveTab('triggers')}
-              >
-                Triggers ({triggers.filter(t => t.enabled).length}/{triggers.length})
-              </button>
-            </div>
-            
-            <div className="settings-content">
-              {/* General Settings Tab */}
-              {activeTab === 'general' && (
-                <>
-                  <div className="setting-group">
-                    <label className="setting-label">
-                      <input
-                        type="checkbox"
-                        checked={heartbeatEnabled}
-                        onChange={e => setHeartbeatEnabled(e.target.checked)}
-                        className="setting-checkbox"
-                      />
-                      <span>Auto-Heartbeat (Prevent Timeout)</span>
-                    </label>
-                    <div className="setting-description">
-                      Sends empty commands only when idle to prevent server timeouts
-                    </div>
-                  </div>
-
-                  {heartbeatEnabled && (
-                    <div className="setting-group">
-                      <label className="setting-label">
-                        Idle Timeout: {heartbeatInterval} seconds
-                      </label>
-                      <input
-                        type="range"
-                        min="30"
-                        max="300"
-                        step="30"
-                        value={heartbeatInterval}
-                        onChange={e => setHeartbeatInterval(parseInt(e.target.value))}
-                        className="setting-slider"
-                      />
-                      <div className="setting-description">
-                        Send heartbeat after this many seconds of inactivity (30-300 seconds)
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Macros Tab */}
-              {activeTab === 'macros' && (
-                <MacroManager 
-                  macros={macros}
-                  onAdd={addMacro}
-                  onEdit={editMacro}
-                  onDelete={deleteMacro}
-                />
-              )}
-
-              {/* Triggers Tab */}
-              {activeTab === 'triggers' && (
-                <TriggerManager 
-                  triggers={triggers}
-                  onAdd={addTrigger}
-                  onEdit={editTrigger}
-                  onDelete={deleteTrigger}
-                  onToggle={toggleTrigger}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Settings Flyout */}
+      <SettingsFlyout
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        heartbeatEnabled={heartbeatEnabled}
+        setHeartbeatEnabled={setHeartbeatEnabled}
+        heartbeatInterval={heartbeatInterval}
+        setHeartbeatInterval={setHeartbeatInterval}
+        macros={macros}
+        addMacro={addMacro}
+        editMacro={editMacro}
+        deleteMacro={deleteMacro}
+        triggers={triggers}
+        addTrigger={addTrigger}
+        editTrigger={editTrigger}
+        deleteTrigger={deleteTrigger}
+        toggleTrigger={toggleTrigger}
+      />
     </div>
   );
 }
