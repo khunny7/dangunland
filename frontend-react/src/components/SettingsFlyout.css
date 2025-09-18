@@ -488,7 +488,7 @@
 @media (max-width: 768px) {
   .settings-flyout {
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     top: 0;
     right: 0;
     bottom: 0;
@@ -504,7 +504,7 @@
   }
   
   .flyout-header {
-    padding: 20px;
+    padding: calc(16px + env(safe-area-inset-top)) 20px 16px 20px;
     border-bottom: 2px solid #6366f1;
   }
   
@@ -520,10 +520,13 @@
   
   .flyout-content {
     padding: 20px;
-    height: calc(100vh - 80px);
+    /* Account for header and bottom safe area */
+    height: calc(100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     overflow-y: auto;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
-}
+
+  .label-text {
     max-width: none;
   }
   
