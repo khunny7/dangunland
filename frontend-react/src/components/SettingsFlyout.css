@@ -488,6 +488,42 @@
 @media (max-width: 768px) {
   .settings-flyout {
     width: 100vw;
+    height: 100vh;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1002;
+  }
+  
+  .settings-backdrop {
+    z-index: 1001;
+  }
+  
+  .flyout-header {
+    padding: 20px;
+    border-bottom: 2px solid #6366f1;
+  }
+  
+  .flyout-title {
+    font-size: 20px;
+  }
+  
+  .close-button {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .flyout-content {
+    padding: 20px;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+}
     max-width: none;
   }
   
