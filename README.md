@@ -1,8 +1,48 @@
 # DangunLand MUD Client
 
-A modern web-based MUD (Multi-User Dungeon) client that supports legacy Korean encoding (EUC-KR) for connecting to Korean MUD servers.
+A modern MUD client for connecting to 단군의땅 (Dangun's Land) MUD server with both web and desktop support.
 
-## Features
+## 🚀 Available Versions
+
+### 🌐 Web Application
+Browser-based client that works on any device with a modern web browser.
+- Uses WebSocket proxy for telnet connectivity
+- No installation required
+- Cross-platform compatibility
+
+### 💻 Desktop Application (Electron)
+Native desktop app with direct telnet connectivity.
+- No proxy server required - direct telnet connections
+- Better performance and native OS integration
+- **Windows Store Ready** - configured for Microsoft Store deployment
+- Offline capable (except for MUD server connection)
+
+## Architecture
+
+The project uses a shared UI architecture to maximize code reuse:
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│   Web Client    │    │ Electron Client │
+│                 │    │                 │
+│ WebSocket ←--→  │    │   IPC ←--→      │
+│ Proxy Server    │    │ Direct Telnet   │
+└─────────────────┘    └─────────────────┘
+         │                       │
+         └─── Shared UI Library ──┘
+              (React Components)
+```
+
+### Components
+
+- **`backend/`** - Node.js WebSocket proxy server (for web client)
+- **`shared-ui/`** - Shared React components and communication adapters
+- **`web/`** - Web application wrapper 
+- **`electron/`** - Desktop Electron application
+- **`frontend-react/`** - Legacy React app (being replaced by web/)
+- **`frontend/`** - Legacy vanilla JS frontend
+
+### Key Features
 
 - **Legacy Encoding Support**: Full EUC-KR encoding support for Korean MUD servers
 - **Modern React Frontend**: Clean, professional UI built with React and Vite
@@ -15,11 +55,68 @@ A modern web-based MUD (Multi-User Dungeon) client that supports legacy Korean e
   - **Text Aliases**: Create short commands that expand to longer sequences
   - **Function Key Macros**: Bind F1-F12 keys to execute commands instantly
   - **Pattern Triggers**: Automatically respond to specific text from the server
-  - **Persistent Settings**: All configurations saved locally
+- **Internationalization**: English and Korean language support
 
-## Architecture
+## Quick Start
 
-The project consists of two main components:
+### Web Version (No Installation)
+1. **Clone and setup**:
+   ```bash
+   git clone <repository-url>
+   cd dangunland
+   npm run install-all
+   ```
+
+2. **Build and start**:
+   ```bash
+   npm run build
+   npm start
+   ```
+
+3. **Open browser**: Navigate to `http://localhost:8080`
+
+### Desktop Version (Electron)
+1. **Setup** (same as web):
+   ```bash
+   git clone <repository-url>
+   cd dangunland
+   npm run install-all
+   ```
+
+2. **Development**:
+   ```bash
+   npm run dev:electron
+   ```
+
+3. **Build distribution**:
+   ```bash
+   npm run build:electron
+   npm run dist:electron-win
+   ```
+
+## Development Workflow
+
+### For Web Development
+```bash
+npm run dev  # Starts backend + web frontend with hot reload
+```
+
+### For Electron Development
+```bash
+npm run dev:electron  # Starts Electron app with hot reload
+```
+
+### Building for Production
+```bash
+# Web version
+npm run build
+
+# Electron version
+npm run build:electron
+
+# Windows Store package
+npm run dist:electron-win-store
+```
 
 ### Backend (Node.js Proxy Server)
 - **Location**: `backend/`

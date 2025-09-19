@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap uap3 mp rescap">
+
+  <Identity Name="khunny7.DangunLandMUDClient" 
+            Publisher="CN=khunny7" 
+            Version="1.0.0.0" />
+
+  <mp:PhoneIdentity PhoneProductId="06ff6d6e-7cca-46a4-b8d7-ff1e93e80a44" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>DangunLand MUD Client</DisplayName>
+    <PublisherDisplayName>khunny7</PublisherDisplayName>
+    <Logo>assets\StoreLogo.png</Logo>
+    <Description>A modern MUD client for DangunLand with retro 80s computer aesthetic. Connect to Korean MUD servers with proper EUC-KR encoding support, advanced macro system, and command triggers.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="DangunLand MUD Client.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="DangunLand MUD Client"
+        Description="Modern MUD client for DangunLand with retro terminal interface"
+        BackgroundColor="#000000"
+        Square150x150Logo="assets\Square150x150Logo.png"
+        Square44x44Logo="assets\Square44x44Logo.png">
+        <uap:DefaultTile 
+          Wide310x150Logo="assets\Wide310x150Logo.png" 
+          Square71x71Logo="assets\SmallTile.png"
+          Square310x310Logo="assets\LargeTile.png"
+          ShortName="DangunLand">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="wide310x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+        <uap:SplashScreen Image="assets\SplashScreen.png" BackgroundColor="#000000"/>
+      </uap:VisualElements>
+      
+      <Extensions>
+        <uap3:Extension Category="windows.protocol">
+          <uap3:Protocol Name="dangunland">
+            <uap3:DisplayName>DangunLand MUD Protocol</uap3:DisplayName>
+          </uap3:Protocol>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClient" />
+    <Capability Name="privateNetworkClientServer" />
+  </Capabilities>
+</Package>
