@@ -287,6 +287,8 @@ function App({ communicationAdapter }) {
         stopHeartbeat();
       } else if (newStatus === 'connecting') {
         pushEvent(`Connecting to port ${port}...`);
+        // Clear any previous activePort when starting connection
+        setActivePort(null);
       }
     };
 
