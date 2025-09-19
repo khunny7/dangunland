@@ -39,7 +39,6 @@ The project uses a shared UI architecture to maximize code reuse:
 - **`shared-ui/`** - Shared React components and communication adapters
 - **`web/`** - Web application wrapper 
 - **`electron/`** - Desktop Electron application
-- **`frontend-react/`** - Legacy React app (being replaced by web/)
 - **`frontend/`** - Legacy vanilla JS frontend
 
 ### Key Features
@@ -128,21 +127,23 @@ npm run dist:electron-win-store
   - Static file serving for the React frontend
   - Session logging capabilities
 
-### Frontend (React Application)
-- **Location**: `frontend-react/`
-- **Purpose**: Modern web interface for MUD interaction
+### Frontend (Shared UI Architecture)
+- **Location**: `shared-ui/` (components), `web/` (web wrapper), `electron/` (desktop wrapper)
+- **Purpose**: Modern web interface for MUD interaction with shared codebase
 - **Features**:
   - xterm.js terminal emulation
   - Command input with history
   - Server selection dropdown
   - Connection status monitoring
   - Event logging panel
+  - Retro 80s computer aesthetic
+  - Macro and trigger support
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
+- Node.js (v18 or higher)
+- npm
 
 ### Installation
 
@@ -152,42 +153,37 @@ npm run dist:electron-win-store
    cd dangunland
    ```
 
-2. **Install backend dependencies**:
+2. **Install all dependencies**:
    ```bash
-   cd backend
-   npm install
-   ```
-
-3. **Install frontend dependencies**:
-   ```bash
-   cd ../frontend-react
-   npm install
+   npm run install-all
    ```
 
 ### Running the Application
 
-1. **Start the backend server**:
+#### Web Version
+1. **Start the development server**:
    ```bash
-   cd backend
-   node src/server.js
-   ```
-   The server will start on `http://localhost:8080`
-
-2. **Start the frontend development server** (in a new terminal):
-   ```bash
-   cd frontend-react
    npm run dev
    ```
-   The React app will be available at `http://localhost:5173`
+   The app will be available at `http://localhost:5173` with backend at `http://localhost:8080`
 
-3. **For production**: The backend serves the built React app, so you only need to:
+2. **For production**:
    ```bash
-   cd frontend-react
    npm run build
-   cd ../backend
-   node src/server.js
+   npm start
    ```
    Then visit `http://localhost:8080`
+
+#### Desktop Version (Electron)
+1. **Start the development app**:
+   ```bash
+   npm run dev:electron
+   ```
+
+2. **Build for distribution**:
+   ```bash
+   npm run dist:electron-win
+   ```
 
 ## Usage
 
