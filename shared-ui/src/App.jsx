@@ -37,275 +37,506 @@ function App({ communicationAdapter }) {
   // Macros and Triggers
   const [macros, setMacros] = useState([]);
   const [triggers, setTriggers] = useState([]);
-  
-  // Terminal setup
+
+  // Refs for history and timers
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
+  const inputRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
+  const lastInputTimeRef = useRef(Date.now());
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedHeartbeat = localStorage.getItem('heartbeatEnabled');
+    if (savedHeartbeat !== null) {
+      setHeartbeatEnabled(JSON.parse(savedHeartbeat));
+    }
+
+    const savedInterval = localStorage.getItem('heartbeatInterval');
+    if (savedInterval !== null) {
+      setHeartbeatInterval(parseInt(savedInterval, 10));
+    }
+
+    const savedMacros = localStorage.getItem('mudClientMacros');
+    if (savedMacros) {
+      setMacros(JSON.parse(savedMacros));
+    } else {
+      // Default macros
+      const defaultMacros = [
+        { id: 1, name: 'Look Around', type: 'alias', trigger: 'l', command: 'look', enabled: true },
+        { id: 2, name: 'Quick Attack', type: 'function', trigger: 'F1', command: 'kill target', enabled: true }
+      ];
+      setMacros(defaultMacros);
+    }
+
+    const savedTriggers = localStorage.getItem('mudClientTriggers');
+    if (savedTriggers) {
+      setTriggers(JSON.parse(savedTriggers));
+    } else {
+      // Default triggers
+      const defaultTriggers = [
+        { id: 1, name: 'Health Warning', type: 'contains', pattern: 'hp', command: 'drink healing', delay: 1000, enabled: true },
+        { id: 2, name: 'Combat Alert', type: 'contains', pattern: 'attacks you', command: 'say Help! I am under attack!', delay: 500, enabled: true }
+      ];
+      setTriggers(defaultTriggers);
+    }
+  }, []);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('heartbeatEnabled', JSON.stringify(heartbeatEnabled));
+  }, [heartbeatEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('heartbeatInterval', heartbeatInterval.toString());
+  }, [heartbeatInterval]);
+
+  useEffect(() => {
+    localStorage.setItem('mudClientMacros', JSON.stringify(macros));
+  }, [macros]);
+
+  useEffect(() => {
+    localStorage.setItem('mudClientTriggers', JSON.stringify(triggers));
+  }, [triggers]);
+
+  // Terminal initialization helper
+  const initializeTerminalContent = useCallback((term) => {
+    try {
+      // Retro terminal startup message
+      term.write('\x1b[32m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m\r\n');
+      term.write(`\x1b[32m║      ${t('terminal.title').padStart(36).padEnd(59)}║\x1b[0m\r\n`);
+      term.write(`\x1b[32m║      ${t('terminal.systemReady').padStart(36).padEnd(52)}║\x1b[0m\r\n`);
+      term.write('\x1b[32m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m\r\n');
+      term.write('\r\n');
+      term.write(`\x1b[33m${t('terminal.selectAndConnect')}\x1b[0m\r\n`);
+    } catch (error) {
+      console.warn('Error writing to terminal:', error);
+    }
+  }, [t]);
+
   useEffect(() => {
     if (!termRef.current) return;
     
     const term = new Terminal({
       convertEol: true,
-      fontFamily: 'JetBrains Mono, Consolas, monospace',
-      fontSize: 16,
-      lineHeight: 1.2,
-      theme: {
-        background: '#000000',
-        foreground: '#00FF00',
-        cursor: '#00FF00',
-        cursorAccent: '#000000',
-        selection: '#333333'
+      fontFamily: 'Courier New, monospace',
+      fontSize: 14,
+      cols: 80,
+      rows: 24,
+      theme: { 
+        background: '#001100',
+        foreground: '#00ff41',
+        cursor: '#00ff41',
+        cursorAccent: '#001100',
+        selection: 'rgba(255, 255, 255, 0.3)'
       },
-      cursorBlink: true,
-      cursorStyle: 'block',
-      scrollback: 5000,
-      allowTransparency: true
+      disableStdin: true // prevent direct typing in terminal; use input bar only
     });
     
-    term.open(termRef.current);
-    xtermRef.current = term;
+    try {
+      // Ensure the container has proper dimensions before opening
+      const container = termRef.current;
+      if (!container) {
+        console.warn('Terminal container not found');
+        return;
+      }
+      
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        // Wait for the container to be properly sized
+        setTimeout(() => {
+          if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+            term.open(container);
+            xtermRef.current = term;
+            console.log('Terminal initialized (delayed)');
+            initializeTerminalContent(term);
+          } else {
+            console.warn('Terminal container still has no dimensions after delay');
+          }
+        }, 100);
+      } else {
+        term.open(container);
+        xtermRef.current = term;
+        console.log('Terminal initialized (immediate)');
+        initializeTerminalContent(term);
+      }
+      
+      // Focus input after mount
+      setTimeout(() => inputRef.current?.focus(), 200);
+    } catch (error) {
+      console.warn('Terminal initialization error:', error);
+    }
     
     return () => {
-      term.dispose();
-      xtermRef.current = null;
+      try {
+        if (xtermRef.current) {
+          xtermRef.current.dispose();
+          xtermRef.current = null;
+        }
+      } catch (error) {
+        console.warn('Terminal disposal error:', error);
+      }
     };
+  }, [initializeTerminalContent]);
+
+  // Connection event helper
+  const pushEvent = useCallback((message) => {
+    const ts = new Date().toLocaleTimeString();
+    setConnEvents(prev => [...prev, { ts, message }]);
   }, []);
 
-  // Communication adapter setup
+  // Heartbeat functionality
+  const startHeartbeat = useCallback(() => {
+    if (!heartbeatEnabled || heartbeatIntervalRef.current) return;
+
+    heartbeatIntervalRef.current = setInterval(() => {
+      const timeSinceLastInput = Date.now() - lastInputTimeRef.current;
+      const shouldSendHeartbeat = timeSinceLastInput >= (heartbeatInterval * 1000);
+
+      if (shouldSendHeartbeat && communicationAdapter && communicationAdapter.isConnected()) {
+        communicationAdapter.sendInput('\n');
+        console.log('Heartbeat sent (via adapter)');
+      }
+    }, heartbeatInterval * 1000);
+  }, [heartbeatEnabled, heartbeatInterval, communicationAdapter]);
+
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => stopHeartbeat();
+  }, [stopHeartbeat]);
+
+  // Trigger processing
+  const processTriggers = useCallback((text) => {
+    for (const trigger of triggers) {
+      if (!trigger.enabled) continue;
+
+      let matches = false;
+      if (trigger.type === 'contains') {
+        matches = text.toLowerCase().includes(trigger.pattern.toLowerCase());
+      } else if (trigger.type === 'regex') {
+        try {
+          const regex = new RegExp(trigger.pattern, 'i');
+          matches = regex.test(text);
+        } catch (e) {
+          console.warn('Invalid regex pattern:', trigger.pattern);
+        }
+      }
+
+      if (matches && communicationAdapter && communicationAdapter.isConnected()) {
+        setTimeout(() => {
+          const payload = trigger.command + '\n';
+          communicationAdapter.sendInput(payload);
+          console.log(`Trigger fired: "${trigger.pattern}" -> "${trigger.command}"`);
+        }, trigger.delay || 0);
+      }
+    }
+  }, [triggers, communicationAdapter]);
+
+  // Terminal output helper
+  const writeToTerminal = useCallback((text) => {
+    if (xtermRef.current && text) {
+      try {
+        xtermRef.current.write(text);
+        if (typeof xtermRef.current.refresh === 'function') {
+          xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+        }
+      } catch (error) {
+        console.error('Error writing to terminal:', error);
+      }
+    } else {
+      console.warn('Cannot write to terminal:', { 
+        hasText: !!text, 
+        hasTerminal: !!xtermRef.current,
+        hasWriteMethod: xtermRef.current && typeof xtermRef.current.write === 'function'
+      });
+    }
+  }, []);
+
+  // Setup communication adapter
   useEffect(() => {
     if (!communicationAdapter) return;
 
-    const handleMessage = (data) => {
+    communicationAdapter.onMessage = (data) => {
       if (typeof data === 'string') {
-        // Handle text data
-        if (xtermRef.current) {
-          xtermRef.current.write(data);
-        }
+        writeToTerminal(data);
+        processTriggers(data);
       } else if (data && typeof data === 'object') {
-        // Handle structured messages
-        if (data.type === 'status') {
-          setStatus(data.status);
-          if (data.port) setActivePort(data.port);
-        } else if (data.type === 'data' && xtermRef.current) {
-          xtermRef.current.write(data.content);
-        } else if (data.type === 'log') {
-          const timestamp = new Date().toISOString();
-          setConnEvents(prev => [...prev.slice(-199), { ts: timestamp, message: data.message }]);
+        if (data.type === 'log') {
+          pushEvent(data.message);
+        } else if (data.data) {
+          writeToTerminal(data.data);
+          processTriggers(data.data);
         }
       }
     };
 
-    const handleStatusChange = (status, port) => {
-      setStatus(status);
-      if (port) setActivePort(port);
-      const timestamp = new Date().toISOString();
-      setConnEvents(prev => [...prev.slice(-199), { ts: timestamp, message: `${status}${port ? `:${port}` : ''}` }]);
+    communicationAdapter.onStatusChange = (newStatus, port) => {
+      setStatus(newStatus);
+      if (newStatus === 'connected' && port) {
+        setActivePort(port);
+        pushEvent(`Connected to port ${port}`);
+        startHeartbeat();
+      } else if (newStatus === 'disconnected') {
+        setActivePort(null);
+        pushEvent('Disconnected');
+        stopHeartbeat();
+      } else if (newStatus === 'connecting') {
+        pushEvent(`Connecting to port ${port}...`);
+      }
     };
-
-    communicationAdapter.onMessage = handleMessage;
-    communicationAdapter.onStatusChange = handleStatusChange;
 
     return () => {
-      communicationAdapter.disconnect?.();
+      if (communicationAdapter.onMessage) {
+        communicationAdapter.onMessage = null;
+      }
+      if (communicationAdapter.onStatusChange) {
+        communicationAdapter.onStatusChange = null;
+      }
     };
-  }, [communicationAdapter]);
+  }, [communicationAdapter, writeToTerminal, processTriggers, pushEvent, startHeartbeat, stopHeartbeat]);
 
-  const connect = useStableCallback((port = selectedPort) => {
-    if (communicationAdapter) {
-      communicationAdapter.connect(port);
+  // Macro expansion helper
+  const expandMacros = useCallback((input) => {
+    let expanded = input;
+    // Check for text alias macros
+    for (const macro of macros) {
+      if (macro.type === 'alias' && macro.trigger === expanded.trim()) {
+        expanded = macro.command;
+        break;
+      }
     }
-  });
+    return expanded;
+  }, [macros]);
 
-  const disconnect = useStableCallback(() => {
-    if (communicationAdapter) {
-      communicationAdapter.disconnect();
+  const sendLine = useCallback(() => {
+    const raw = inputValue;
+    let line = raw.trimEnd();
+    
+    // Update last input time when user sends a command
+    lastInputTimeRef.current = Date.now();
+    
+    // Expand macros before sending
+    line = expandMacros(line);
+    
+    // Always send something, even if empty (just newline)
+    const dataToSend = line + '\n';
+    
+    // Push original input to history (not expanded), only if non-empty and different from last
+    if (raw.trim()) {
+      const hist = historyRef.current;
+      if (hist.length === 0 || hist[hist.length - 1] !== raw.trim()) {
+        hist.push(raw.trim());
+        if (hist.length > 200) hist.splice(0, hist.length - 200);
+      }
     }
-  });
-
-  const sendInput = useStableCallback((input) => {
+    historyIndexRef.current = -1;
+    
     if (communicationAdapter && communicationAdapter.isConnected()) {
-      communicationAdapter.sendInput(input);
-    }
-  });
-
-  const handleInputSubmit = useStableCallback(() => {
-    if (inputValue.trim()) {
-      sendInput(inputValue);
+      communicationAdapter.sendInput(dataToSend);
       setInputValue('');
     }
-  });
+    // refocus input
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, [inputValue, expandMacros, communicationAdapter]);
+
+  const downloadText = (text, name) => {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const saveLog = () => {
-    if (communicationAdapter) {
-      communicationAdapter.saveLog?.();
+    if (communicationAdapter && communicationAdapter.saveLog) {
+      communicationAdapter.saveLog();
     }
   };
 
   const clearTerminal = () => {
     if (xtermRef.current) {
       xtermRef.current.clear();
+      xtermRef.current.write('\x1b[32m> Terminal cleared\x1b[0m\r\n');
     }
   };
 
-  // Load settings from localStorage
-  useEffect(() => {
-    const savedMacros = localStorage.getItem('dangunland-macros');
-    const savedTriggers = localStorage.getItem('dangunland-triggers');
-    const savedHeartbeat = localStorage.getItem('dangunland-heartbeat');
-    const savedInterval = localStorage.getItem('dangunland-heartbeat-interval');
-    
-    if (savedMacros) {
-      try {
-        setMacros(JSON.parse(savedMacros));
-      } catch (e) {
-        console.warn('Failed to load macros from localStorage:', e);
+  // Function key macro handler
+  const handleFunctionKey = useCallback((e) => {
+    // Check for function key macros (F1-F12)
+    if (e.key.startsWith('F') && /^F([1-9]|1[0-2])$/.test(e.key)) {
+      const functionKey = e.key;
+      const macro = macros.find(m => m.type === 'function' && m.trigger === functionKey);
+      if (macro && communicationAdapter && communicationAdapter.isConnected()) {
+        e.preventDefault();
+        communicationAdapter.sendInput(macro.command + '\n');
+        console.log(`Function key macro fired: ${functionKey} -> ${macro.command}`);
+        return true;
       }
     }
-    
-    if (savedTriggers) {
-      try {
-        setTriggers(JSON.parse(savedTriggers));
-      } catch (e) {
-        console.warn('Failed to load triggers from localStorage:', e);
-      }
+    return false;
+  }, [macros, communicationAdapter]);
+
+  // Global key handler for function keys
+  useEffect(() => {
+    const globalKeyHandler = (e) => {
+      handleFunctionKey(e);
+    };
+
+    document.addEventListener('keydown', globalKeyHandler);
+    return () => document.removeEventListener('keydown', globalKeyHandler);
+  }, [handleFunctionKey]);
+
+  const toggleConnection = useCallback(() => {
+    if (!communicationAdapter) return;
+
+    if (communicationAdapter.isConnected()) {
+      communicationAdapter.disconnect();
+    } else {
+      communicationAdapter.connect(selectedPort);
     }
-    
-    if (savedHeartbeat !== null) {
-      setHeartbeatEnabled(savedHeartbeat === 'true');
+  }, [communicationAdapter, selectedPort]);
+
+  // Status text helper
+  const getStatusText = (status) => {
+    if (status === 'connected' && activePort) {
+      return `${t('app.connected')} (port ${activePort})`;
     }
-    
-    if (savedInterval) {
-      const interval = parseInt(savedInterval, 10);
-      if (!isNaN(interval) && interval > 0) {
-        setHeartbeatInterval(interval);
-      }
+    if (status === 'connecting') {
+      return `${t('app.connecting')} (port ${selectedPort})...`;
     }
-  }, []);
-
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('dangunland-macros', JSON.stringify(macros));
-  }, [macros]);
-
-  useEffect(() => {
-    localStorage.setItem('dangunland-triggers', JSON.stringify(triggers));
-  }, [triggers]);
-
-  useEffect(() => {
-    localStorage.setItem('dangunland-heartbeat', heartbeatEnabled.toString());
-  }, [heartbeatEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('dangunland-heartbeat-interval', heartbeatInterval.toString());
-  }, [heartbeatInterval]);
+    return t(`app.${status}`) || status;
+  };
 
   return (
     <div className="app">
-      <header className="header">
-        <Logo />
-        <div className="header-controls">
-          <LanguageSwitcher />
-          <button
-            className="settings-btn"
-            onClick={() => setSettingsOpen(true)}
-            aria-label={t('settings.title')}
-          >
-            ⚙️
-          </button>
-        </div>
-      </header>
+      {/* Top-right Controls */}
+      <div className="top-controls">
+        <LanguageSwitcher />
+        <button 
+          className="top-settings-button"
+          onClick={() => setSettingsOpen(true)}
+          title={t('settings.title')}
+        >
+          ⚙️
+        </button>
+      </div>
 
-      <main className="main">
-        <div className="terminal-container">
-          <div className="terminal-header">
-            <div className="connection-status">
-              <span className={`status-indicator ${status}`} />
-              <span className="status-text">
-                {status === 'connected' ? t('status.connected') : 
-                 status === 'connecting' ? t('status.connecting') : 
-                 t('status.disconnected')}
-                {activePort && ` (${t('port')} ${activePort})`}
-              </span>
+      {/* Computer Case */}
+      <div className="computer-case">
+        {/* Decorative Vent */}
+        <div className="vent"></div>
+        
+        {/* Monitor */}
+        <div className="monitor">
+          <div className="terminal" ref={termRef} />
+        </div>
+
+        {/* Control Panel */}
+        <div className="control-panel">
+          <div className="menu-bar">
+            <div className="app-logo-section">
+              <Logo size={24} className="app-logo" />
+              <span className="app-title">{t('app.title')}</span>
             </div>
-            <div className="terminal-controls">
-              <select
-                value={selectedPort}
-                onChange={(e) => setSelectedPort(e.target.value)}
-                disabled={status === 'connected' || status === 'connecting'}
-              >
-                <option value="5002">5002</option>
-                <option value="5003">5003</option>
-              </select>
-              {status === 'connected' ? (
-                <button onClick={disconnect} className="disconnect-btn">
-                  {t('disconnect')}
-                </button>
-              ) : (
-                <button 
-                  onClick={() => connect(selectedPort)} 
-                  className="connect-btn"
-                  disabled={status === 'connecting'}
-                >
-                  {t('connect')}
-                </button>
-              )}
-              <button onClick={clearTerminal} className="clear-btn">
-                {t('clear')}
-              </button>
-              <button onClick={saveLog} className="save-log-btn">
-                {t('saveLog')}
-              </button>
-              <button 
-                onClick={() => setLogOpen(!logOpen)} 
-                className="toggle-log-btn"
-              >
-                {t('logs')}
-              </button>
+            
+            <div className="status-section">
+              <span className={`status-light ${activePort ? 'connected' : ''}`}></span>
+              <span className="status-text">{getStatusText(status)}</span>
             </div>
-          </div>
-          
-          <div ref={termRef} className="terminal" />
-          
-          <div className="input-container">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleInputSubmit();
-                }
-              }}
-              placeholder={t('inputPlaceholder')}
-              className="command-input"
-              disabled={status !== 'connected'}
-            />
-            <button 
-              onClick={handleInputSubmit}
-              disabled={status !== 'connected' || !inputValue.trim()}
-              className="send-btn"
+            
+            <select 
+              className="retro-select" 
+              value={selectedPort} 
+              onChange={e => setSelectedPort(e.target.value)}
             >
-              {t('send')}
+              <option value="5002">Server 1 (5002)</option>
+              <option value="5003">Server 2 (5003)</option>
+            </select>
+
+            <button 
+              className={`retro-button ${status === 'connected' ? 'disconnect' : 'connect'}`} 
+              onClick={toggleConnection}
+            >
+              {status === 'connected' ? '🔌 ' + t('app.disconnect') : '🔌 ' + t('app.connect')}
+            </button>
+            
+            <button className="retro-button" onClick={clearTerminal}>
+              {t('app.clear')}
+            </button>
+            
+            <button className="retro-button" onClick={saveLog}>
+              {t('app.saveLog')}
+            </button>
+            
+            <button 
+              className="retro-button" 
+              onClick={() => setLogOpen(o => !o)}
+            >
+              {logOpen ? t('app.hideLog') : t('app.showLog')}
             </button>
           </div>
+
+          <input
+            ref={inputRef}
+            className="input-bar"
+            value={inputValue}
+            onChange={e => { setInputValue(e.target.value); historyIndexRef.current = -1; }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { sendLine(); e.preventDefault(); }
+              else if (e.key === 'ArrowUp') {
+                const hist = historyRef.current;
+                if (hist.length) {
+                  if (historyIndexRef.current === -1) historyIndexRef.current = hist.length - 1; 
+                  else if (historyIndexRef.current > 0) historyIndexRef.current--;
+                  setInputValue(hist[historyIndexRef.current]);
+                  e.preventDefault();
+                }
+              } else if (e.key === 'ArrowDown') {
+                const hist = historyRef.current;
+                if (hist.length) {
+                  if (historyIndexRef.current >= 0) historyIndexRef.current++;
+                  if (historyIndexRef.current >= hist.length) { 
+                    historyIndexRef.current = -1; 
+                    setInputValue(''); 
+                  } else { 
+                    setInputValue(hist[historyIndexRef.current]); 
+                  }
+                  e.preventDefault();
+                }
+              }
+            }}
+            placeholder={t('terminal.placeholder')}
+            spellCheck={false}
+            autoComplete="off"
+          />
+
+          {logOpen && (
+            <div className="log-panel">
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                <strong>{t('app.connectionLog')}</strong>
+                <button className="retro-button" onClick={() => setConnEvents([])} style={{fontSize: '10px', padding: '4px 8px'}}>
+                  {t('app.clear')}
+                </button>
+              </div>
+              <div style={{maxHeight: '150px', overflowY: 'auto'}}>
+                {connEvents.slice().reverse().map((e,i) => (
+                  <div key={i} className="log-entry">
+                    [{e.ts}] {e.message}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+      </div>
 
-        {logOpen && (
-          <div className="log-panel">
-            <div className="log-header">
-              <h3>{t('connectionLog')}</h3>
-              <button onClick={() => setLogOpen(false)}>×</button>
-            </div>
-            <div className="log-content">
-              {connEvents.map((event, i) => (
-                <div key={i} className="log-entry">
-                  <span className="log-time">{event.ts}</span>
-                  <span className="log-message">{event.message}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-
+      {/* Settings Flyout */}
       {settingsOpen && (
         <SettingsFlyout
           isOpen={settingsOpen}
