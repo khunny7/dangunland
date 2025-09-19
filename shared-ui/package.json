@@ -11,7 +11,7 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./styles": "./dist/styles.css"
+    "./dist/index.css": "./dist/index.css"
   },
   "scripts": {
     "build": "vite build",

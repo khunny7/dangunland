@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App, ElectronIPCAdapter } from 'dangunland-shared-ui';
-import 'dangunland-shared-ui/styles';
+import 'dangunland-shared-ui/dist/index.css';
 
 // Create communication adapter for Electron
 const communicationAdapter = new ElectronIPCAdapter();

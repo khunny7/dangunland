@@ -18,13 +18,17 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 
 // For Azure deployment, dist is copied to backend/dist
-// For local dev, it's in frontend-react/dist
+// For local dev, it's in web/dist (new web wrapper)
+// Legacy: frontend-react/dist (old direct React app)
 const DEPLOYED_DIST = path.join(__dirname, '..', 'dist');
+const WEB_DIST = path.join(ROOT_DIR, 'web', 'dist');
 const REACT_DIST = path.join(ROOT_DIR, 'frontend-react', 'dist');
 const LEGACY_STATIC = path.join(ROOT_DIR, 'frontend', 'public');
 
 // Basic mime map
-const STATIC_DIR = fs.existsSync(DEPLOYED_DIST) ? DEPLOYED_DIST : (fs.existsSync(REACT_DIST) ? REACT_DIST : LEGACY_STATIC);
+const STATIC_DIR = fs.existsSync(DEPLOYED_DIST) ? DEPLOYED_DIST : 
+                   (fs.existsSync(WEB_DIST) ? WEB_DIST : 
+                   (fs.existsSync(REACT_DIST) ? REACT_DIST : LEGACY_STATIC));
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
 
