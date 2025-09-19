@@ -39,8 +39,6 @@ The project uses a shared UI architecture to maximize code reuse:
 - **`shared-ui/`** - Shared React components and communication adapters
 - **`web/`** - Web application wrapper 
 - **`electron/`** - Desktop Electron application
-- **`frontend-react/`** - Legacy React app (being replaced by web/)
-- **`frontend/`** - Legacy vanilla JS frontend
 
 ### Key Features
 
@@ -128,9 +126,9 @@ npm run dist:electron-win-store
   - Static file serving for the React frontend
   - Session logging capabilities
 
-### Frontend (React Application)
-- **Location**: `frontend-react/`
-- **Purpose**: Modern web interface for MUD interaction
+### Web Frontend (React Application)
+- **Location**: `web/` + `shared-ui/`
+- **Purpose**: Modern web interface for MUD interaction using shared UI components
 - **Features**:
   - xterm.js terminal emulation
   - Command input with history
@@ -160,8 +158,7 @@ npm run dist:electron-win-store
 
 3. **Install frontend dependencies**:
    ```bash
-   cd ../frontend-react
-   npm install
+   npm run install-all
    ```
 
 ### Running the Application
@@ -173,19 +170,16 @@ npm run dist:electron-win-store
    ```
    The server will start on `http://localhost:8080`
 
-2. **Start the frontend development server** (in a new terminal):
+2. **Start the web development server** (in a new terminal):
    ```bash
-   cd frontend-react
    npm run dev
    ```
    The React app will be available at `http://localhost:5173`
 
 3. **For production**: The backend serves the built React app, so you only need to:
    ```bash
-   cd frontend-react
    npm run build
-   cd ../backend
-   node src/server.js
+   npm start
    ```
    Then visit `http://localhost:8080`
 
