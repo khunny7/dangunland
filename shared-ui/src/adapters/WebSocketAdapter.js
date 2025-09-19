@@ -45,7 +45,7 @@ export class WebSocketCommunicationAdapter {
         } else if (data.t === 'error') {
           this.onMessage?.({ type: 'log', message: `Error: ${data.data}` });
         }
-      } catch (e) {
+      } catch {
         // Handle binary/text data
         if (typeof event.data === 'string') {
           this.onMessage?.(event.data);

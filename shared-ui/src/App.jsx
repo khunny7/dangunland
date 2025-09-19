@@ -133,15 +133,6 @@ function App({ communicationAdapter }) {
     }
   });
 
-  const downloadText = (text, name) => {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
   const saveLog = () => {
     if (communicationAdapter) {
       communicationAdapter.saveLog?.();
