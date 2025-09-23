@@ -13,9 +13,11 @@
     "electron"
   ],
   "scripts": {
-    "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace web run dev\"",
-    "dev:web": "concurrently \"npm --workspace backend run dev\" \"npm --workspace web run dev\"",
-    "dev:electron": "npm --workspace electron run dev",
+    "predev": "npm --workspace shared-ui run build",
+    "dev": "concurrently \"npm --workspace shared-ui run dev\" \"npm --workspace backend run dev\" \"npm --workspace web run dev\"",
+    "dev:web": "concurrently \"npm --workspace shared-ui run dev\" \"npm --workspace backend run dev\" \"npm --workspace web run dev\"",
+    "predev:electron": "npm --workspace shared-ui run build",
+    "dev:electron": "concurrently \"npm --workspace shared-ui run dev\" \"npm --workspace electron run dev\"",
     "build": "npm --workspace shared-ui run build && npm --workspace web run build",
     "build:web": "npm --workspace shared-ui run build && npm --workspace web run build",
     "build:electron": "npm --workspace shared-ui run build && npm --workspace electron run build",

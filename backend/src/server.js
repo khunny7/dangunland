@@ -209,7 +209,14 @@ wss.on('connection', (ws) => {
       sessionLog.push(buf.toString('hex'));
       const cleaned = processTelnetData(buf, socket);
       if (cleaned.length) {
-        ws.send(cleaned);
+        try {
+          // Decode from EUC-KR to UTF-8 string before sending (align with Electron client behavior)
+          const text = iconv.decode(cleaned, ENCODING);
+          ws.send(text);
+        } catch (e) {
+          // Fallback: send raw binary if decode fails
+            ws.send(cleaned);
+        }
       }
     });
   }

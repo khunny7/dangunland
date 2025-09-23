@@ -28,42 +28,63 @@ export class WebSocketCommunicationAdapter {
     this.onStatusChange?.('connecting', port);
     
     this.ws = new WebSocket(wsUrl);
+    // Ensure we always receive raw ArrayBuffer (not Blob) for binary frames
+    this.ws.binaryType = 'arraybuffer';
     
     this.ws.onopen = () => {
       console.log('WebSocket connected');
-      // Request connection to MUD server
-      this.ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(port, 10) }));
+      try {
+        this.ws.send(JSON.stringify({ t: 'switchPort', port: parseInt(port, 10) }));
+      } catch (e) {
+        console.error('Failed to send switchPort message:', e);
+      }
     };
-    
+
     this.ws.onmessage = (event) => {
-      if (typeof event.data === 'string') {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.t === 'status') {
-            if (data.data === 'disconnect') {
-              this.onStatusChange?.('disconnected');
+      try {
+        if (typeof event.data === 'string') {
+          // Likely JSON control frame
+          try {
+            const data = JSON.parse(event.data);
+            if (data.t === 'status') {
+              if (data.data === 'disconnect') {
+                this.onStatusChange?.('disconnected');
+              } else {
+                const statusParts = data.data.split(':');
+                const state = statusParts[0];
+                const port = statusParts[2];
+                this.onStatusChange?.(state, port);
+              }
+            } else if (data.t === 'log') {
+              this.onMessage?.({ type: 'log', message: 'Log saved' });
+            } else if (data.t === 'error') {
+              this.onMessage?.({ type: 'log', message: `Error: ${data.data}` });
             } else {
-              // Handle status format like "connected:dangunland.iptime.org:5002" or "connecting:dangunland.iptime.org:5002"
-              const statusParts = data.data.split(':');
-              const state = statusParts[0];
-              const port = statusParts[2];
-              this.onStatusChange?.(state, port);
+              // Fallback raw text
+              this.onMessage?.(event.data);
             }
-          } else if (data.t === 'log') {
-            this.onMessage?.({ type: 'log', message: 'Log saved' });
-          } else if (data.t === 'error') {
-            this.onMessage?.({ type: 'log', message: `Error: ${data.data}` });
+          } catch {
+            // Plain text payload
+            this.onMessage?.(event.data);
           }
-        } catch {
-          // Not JSON, treat as text data
-          this.onMessage?.(event.data);
+        } else if (event.data instanceof ArrayBuffer) {
+          const uint8Array = new Uint8Array(event.data);
+          const decoder = new TextDecoder('utf-8');
+          const text = decoder.decode(uint8Array);
+          this.onMessage?.(text);
+        } else if (event.data instanceof Blob) {
+          // Should not happen after binaryType change, but handle gracefully
+            event.data.arrayBuffer().then(buf => {
+              const uint8Array = new Uint8Array(buf);
+              const decoder = new TextDecoder('utf-8');
+              const text = decoder.decode(uint8Array);
+              this.onMessage?.(text);
+            }).catch(err => console.error('Blob decode error', err));
+        } else {
+          console.warn('Unknown WebSocket message type', event.data);
         }
-      } else {
-        // Handle binary data (ArrayBuffer)
-        const uint8Array = new Uint8Array(event.data);
-        const decoder = new TextDecoder('utf-8');
-        const text = decoder.decode(uint8Array, { stream: true });
-        this.onMessage?.(text);
+      } catch (e) {
+        console.error('WebSocket message handling error:', e);
       }
     };
     
