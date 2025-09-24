@@ -53,8 +53,21 @@
     "files": [
       "src/**/*",
       "dist/**/*",
-      "node_modules/**/*"
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/tests/**/*", 
+      "!node_modules/**/*.md",
+      "!node_modules/**/.npmignore",
+      "!node_modules/**/LICENSE*",
+      "!node_modules/**/CHANGELOG*",
+      "!node_modules/**/*.map"
     ],
+    "compression": "maximum",
+    "removePackageScripts": true,
+    "removePackageKeywords": true,
+    "asar": {
+      "smartUnpack": false
+    },
+    "asarUnpack": [],
     "win": {
       "target": [
         {
@@ -74,6 +87,7 @@
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false
     },
+    "afterPack": "./scripts/optimize-locales.js",
     "appx": {
       "applicationId": "App",
       "backgroundColor": "#000000",
