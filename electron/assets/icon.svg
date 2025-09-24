@@ -1,7 +1,7 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background with subtle gradient -->
+  <!-- Background gradient -->
   <defs>
-    <radialGradient id="bgGradient" cx="50%" cy="40%" r="60%">
+    <radialGradient id="bgGradient" cx="50%" cy="40%" r="70%">
       <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
     </radialGradient>
@@ -10,7 +10,7 @@
       <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1" />
     </linearGradient>
     <filter id="glow">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
       <feMerge> 
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -18,68 +18,68 @@
     </filter>
   </defs>
   
-  <!-- Main background circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#00ff41" stroke-width="4"/>
+  <!-- Full square background - no circle -->
+  <rect x="0" y="0" width="512" height="512" rx="32" fill="url(#bgGradient)" stroke="#00ff41" stroke-width="8"/>
   
   <!-- Terminal window frame -->
-  <rect x="80" y="120" width="352" height="272" rx="16" fill="url(#terminalGradient)" stroke="#00ff41" stroke-width="3"/>
+  <rect x="60" y="100" width="392" height="312" rx="16" fill="url(#terminalGradient)" stroke="#00ff41" stroke-width="4"/>
   
   <!-- Terminal header bar -->
-  <rect x="80" y="120" width="352" height="48" rx="16" fill="#2a2a2a"/>
-  <rect x="80" y="152" width="352" height="16" fill="#2a2a2a"/>
+  <rect x="60" y="100" width="392" height="56" rx="16" fill="#2a2a2a"/>
+  <rect x="60" y="140" width="392" height="16" fill="#2a2a2a"/>
   
   <!-- Terminal control buttons -->
-  <circle cx="112" cy="144" r="8" fill="#ff5f56"/>
-  <circle cx="140" cy="144" r="8" fill="#ffbd2e"/>
-  <circle cx="168" cy="144" r="8" fill="#27ca3f"/>
+  <circle cx="100" cy="128" r="10" fill="#ff5f56"/>
+  <circle cx="132" cy="128" r="10" fill="#ffbd2e"/>
+  <circle cx="164" cy="128" r="10" fill="#27ca3f"/>
   
   <!-- Terminal title -->
-  <text x="256" y="149" text-anchor="middle" fill="#888" font-size="16" font-family="monospace" font-weight="bold">DangunLand MUD Client</text>
+  <text x="256" y="135" text-anchor="middle" fill="#888" font-size="18" font-family="monospace" font-weight="bold">DangunLand MUD Client</text>
   
   <!-- Main DANGUN text with glow effect -->
-  <text x="256" y="240" text-anchor="middle" fill="#00ff41" font-size="48" font-family="monospace" font-weight="bold" filter="url(#glow)">DANGUN</text>
+  <text x="256" y="250" text-anchor="middle" fill="#00ff41" font-size="56" font-family="monospace" font-weight="bold" filter="url(#glow)">DANGUN</text>
   
   <!-- Subtitle text -->
-  <text x="256" y="270" text-anchor="middle" fill="#00aa33" font-size="20" font-family="monospace">MUD CLIENT</text>
+  <text x="256" y="285" text-anchor="middle" fill="#00aa33" font-size="24" font-family="monospace">MUD CLIENT</text>
   
   <!-- Network connection visualization -->
-  <g stroke="#00ff41" stroke-width="3" fill="none">
+  <g stroke="#00ff41" stroke-width="4" fill="none">
     <!-- Connection lines -->
-    <line x1="120" y1="300" x2="180" y2="300"/>
-    <line x1="332" y1="300" x2="392" y2="300"/>
-    <line x1="180" y1="300" x2="220" y2="320"/>
-    <line x1="332" y1="300" x2="292" y2="320"/>
-    <line x1="220" y1="320" x2="292" y2="320"/>
+    <line x1="120" y1="320" x2="180" y2="320"/>
+    <line x1="332" y1="320" x2="392" y2="320"/>
+    <line x1="180" y1="320" x2="230" y2="340"/>
+    <line x1="332" y1="320" x2="282" y2="340"/>
+    <line x1="230" y1="340" x2="282" y2="340"/>
     
     <!-- Network nodes -->
-    <circle cx="140" cy="300" r="6" fill="#00ff41"/>
-    <circle cx="372" cy="300" r="6" fill="#00ff41"/>
-    <circle cx="256" cy="320" r="8" fill="#00ff41"/>
+    <circle cx="150" cy="320" r="8" fill="#00ff41"/>
+    <circle cx="362" cy="320" r="8" fill="#00ff41"/>
+    <circle cx="256" cy="340" r="10" fill="#00ff41"/>
   </g>
   
   <!-- Server representation -->
-  <rect x="236" y="340" width="40" height="24" rx="4" fill="#00ff41" opacity="0.8"/>
-  <rect x="240" y="344" width="32" height="4" fill="#000"/>
-  <rect x="240" y="352" width="32" height="4" fill="#000"/>
+  <rect x="230" y="365" width="52" height="28" rx="6" fill="#00ff41" opacity="0.8"/>
+  <rect x="236" y="371" width="40" height="5" fill="#000"/>
+  <rect x="236" y="380" width="40" height="5" fill="#000"/>
   
   <!-- Animated cursor/terminal indicator -->
-  <rect x="320" y="355" width="24" height="8" rx="2" fill="#00ff41" opacity="0.9">
+  <rect x="320" y="375" width="28" height="10" rx="3" fill="#00ff41" opacity="0.9">
     <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite"/>
   </rect>
   
   <!-- Korean characters (단군) as decorative elements -->
-  <text x="140" y="360" text-anchor="middle" fill="#00aa33" font-size="24" font-family="serif" opacity="0.6">단</text>
-  <text x="372" y="360" text-anchor="middle" fill="#00aa33" font-size="24" font-family="serif" opacity="0.6">군</text>
+  <text x="150" y="385" text-anchor="middle" fill="#00aa33" font-size="28" font-family="serif" opacity="0.7">단</text>
+  <text x="362" y="385" text-anchor="middle" fill="#00aa33" font-size="28" font-family="serif" opacity="0.7">군</text>
   
   <!-- Data flow particles -->
-  <g fill="#00ff41" opacity="0.7">
-    <circle cx="200" cy="305" r="2">
+  <g fill="#00ff41" opacity="0.8">
+    <circle cx="200" cy="325" r="3">
       <animate attributeName="cx" values="200;250;200" dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="312" cy="305" r="2">
+    <circle cx="312" cy="325" r="3">
       <animate attributeName="cx" values="312;262;312" dur="2.5s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.5s" repeatCount="indefinite"/>
     </circle>
   </g>
 </svg>
