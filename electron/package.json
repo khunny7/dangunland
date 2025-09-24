@@ -25,7 +25,8 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:win-store": "electron-builder --win --publish=never -c.win.target=appx",
-    "check-store-ready": "node scripts/prepare-store.js"
+    "check-store-ready": "node scripts/prepare-store.js",
+    "validate-config": "node scripts/validate-config.js"
   },
   "dependencies": {
     "dangunland-shared-ui": "file:../shared-ui",
@@ -36,7 +37,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.2.1",
     "electron": "^32.0.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.0.12",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "vite": "^7.1.2",
@@ -70,16 +71,13 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "publisherName": "Piano8283 Studio",
-      "certificateFile": null,
-      "certificatePassword": null,
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false
     },
     "appx": {
-      "applicationId": "31546YounghoonGim.Dangunmudclient",
+      "applicationId": "App",
       "backgroundColor": "#000000",
-      "displayName": "DangunLand MUD Client",
+      "displayName": "Dangun mud client",
       "identityName": "31546YounghoonGim.Dangunmudclient",
       "publisher": "CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0",
       "publisherDisplayName": "Piano8283 Studio",

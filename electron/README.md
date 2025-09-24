@@ -67,15 +67,25 @@ React App → ElectronIPCAdapter → IPC → Main Process → Direct Telnet → 
 
 The app is **READY** for Windows Store submission with:
 
-- **App Identity**: `khunny7.DangunLandMUDClient`
-- **Publisher**: `CN=khunny7`
+- **App Identity**: `31546YounghoonGim.Dangunmudclient`
+- **Publisher**: `CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0`
 - **Capabilities**: Full trust, network access
 - **Package Format**: APPX
 - **All Required Assets**: ✅ Complete (see `assets/` directory)
 
 ### Store Package Creation
+
+**⚠️ Platform Requirement**: Windows Store (.appx) packages can only be built on Windows 10+ systems.
+
+**Local Build (Windows only):**
 ```bash
 npm run dist:win-store
+```
+
+**Configuration Validation:**
+```bash
+npm run validate-config    # Comprehensive validation
+npm run check-store-ready  # Quick readiness check
 ```
 
 This creates an `.appx` file in the `release` directory ready for Store submission.

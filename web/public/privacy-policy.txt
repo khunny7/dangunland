@@ -1,0 +1,52 @@
+PRIVACY POLICY
+
+Last updated: September 24, 2025
+
+OVERVIEW
+Piano8283 Studio ("we", "our", or "us") operates the DangunLand MUD Client application. This privacy policy explains how we handle information when you use our MUD client application.
+
+INFORMATION WE COLLECT
+Our MUD client is designed to connect you to Multi-User Dungeon (MUD) game servers. We collect minimal information necessary for the application to function:
+- Connection Data: Server addresses and port numbers you configure to connect to MUD servers
+- Application Settings: User preferences, macros, and display settings stored locally on your device  
+- Technical Data: Basic diagnostic information to ensure the application functions properly
+
+HOW WE USE INFORMATION
+The information we collect is used solely to:
+- Enable connections to MUD game servers
+- Save your application preferences and settings
+- Provide technical support when needed
+- Improve the application's functionality and user experience
+
+DATA STORAGE AND SECURITY
+- Local Storage: Your settings and preferences are stored locally on your device
+- No Cloud Storage: We do not store your personal data on our servers
+- Game Server Communication: Communications with MUD servers are direct connections; we do not intercept or store game data
+
+THIRD-PARTY SERVICES
+Our application connects to third-party MUD game servers. The privacy practices of these servers are governed by their own privacy policies, which we encourage you to review.
+
+DATA SHARING
+We do not sell, trade, or otherwise transfer your information to third parties. We may share information only in the following circumstances:
+- With your explicit consent
+- To comply with legal obligations  
+- To protect our rights and safety
+
+CHILDREN'S PRIVACY
+Our application is not specifically designed for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, please contact us immediately.
+
+YOUR RIGHTS
+Since most data is stored locally on your device, you have full control over your information:
+- You can modify or delete your settings at any time through the application
+- You can uninstall the application to remove all locally stored data
+- You can contact us with questions about your data
+
+CHANGES TO THIS POLICY
+We may update this privacy policy from time to time. We will notify users of any significant changes by updating the "Last updated" date at the top of this policy.
+
+CONTACT INFORMATION
+If you have any questions about this privacy policy or our data practices, please contact us:
+
+Piano8283 Studio
+Email: support@piano8283.com
+Website: https://dangunland.piano8283.com
