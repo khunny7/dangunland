@@ -67,8 +67,8 @@ React App → ElectronIPCAdapter → IPC → Main Process → Direct Telnet → 
 
 The app is **READY** for Windows Store submission with:
 
-- **App Identity**: `khunny7.DangunLandMUDClient`
-- **Publisher**: `CN=khunny7`
+- **App Identity**: `31546YounghoonGim.Dangunmudclient`
+- **Publisher**: `CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0`
 - **Capabilities**: Full trust, network access
 - **Package Format**: APPX
 - **All Required Assets**: ✅ Complete (see `assets/` directory)
@@ -81,9 +81,6 @@ The app is **READY** for Windows Store submission with:
 ```bash
 npm run dist:win-store
 ```
-
-**Cross-Platform Build (GitHub Actions):**
-Use the "Windows Store Build" workflow in GitHub Actions for building from macOS/Linux.
 
 **Configuration Validation:**
 ```bash

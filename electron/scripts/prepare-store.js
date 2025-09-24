@@ -91,8 +91,8 @@ function checkManifest() {
   const manifest = fs.readFileSync(manifestPath, 'utf8');
   
   const checks = {
-    'Identity Name': manifest.includes('khunny7.DangunLandMUDClient'),
-    'Publisher': manifest.includes('CN=khunny7'),
+    'Identity Name': manifest.includes('31546YounghoonGim.Dangunmudclient'),
+    'Publisher': manifest.includes('CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0'),
     'DisplayName': manifest.includes('DangunLand MUD Client'),
     'Description': manifest.includes('Description'),
     'Assets referenced': REQUIRED_ASSETS.filter(a => a.endsWith('.png')).every(a => manifest.includes(a))

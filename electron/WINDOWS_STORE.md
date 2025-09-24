@@ -61,16 +61,7 @@ Check if your configuration is ready:
 npm --workspace electron run check-store-ready
 ```
 
-### Option 2: Using GitHub Actions (Recommended for Cross-Platform Development)
-If you're developing on macOS or Linux, use the provided GitHub Actions workflow:
-
-1. Push your changes to the main branch or manually trigger the workflow
-2. Go to GitHub Actions → "Windows Store Build" workflow
-3. The workflow will build on Windows runners and create the .appx package
-4. Download the artifacts from the completed workflow run
-
-### Option 3: Manual APPX Creation
-If the automated build fails, you can create the APPX manually:
+### Option 2: Manual APPX Creation
 If the automated build fails, you can create the APPX manually:
 
 1. Build the electron app:
@@ -86,8 +77,8 @@ If the automated build fails, you can create the APPX manually:
 ## App Configuration
 
 ### Package Identity
-- **Package Name**: `khunny7.DangunLandMUDClient`
-- **Publisher**: `CN=khunny7`
+- **Package Name**: `31546YounghoonGim.Dangunmudclient`
+- **Publisher**: `CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0`
 - **Version**: `1.0.0.0`
 
 ### Capabilities
@@ -166,8 +157,8 @@ Perfect for Korean MUD gaming enthusiasts who want a reliable, feature-rich clie
 
 ### Step 2: App Identity
 1. Copy the Package Identity values to match your APPX:
-   - Package/Identity/Name: `khunny7.DangunLandMUDClient`
-   - Package/Identity/Publisher: `CN=khunny7`
+   - Package/Identity/Name: `31546YounghoonGim.Dangunmudclient`
+   - Package/Identity/Publisher: `CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0`
 
 ### Step 3: Upload Package
 1. Upload the generated `.appx` file

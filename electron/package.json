@@ -72,11 +72,11 @@
       "signAndEditExecutable": false
     },
     "appx": {
-      "applicationId": "khunny7.DangunLandMUDClient",
+      "applicationId": "31546YounghoonGim.Dangunmudclient",
       "backgroundColor": "#000000",
       "displayName": "DangunLand MUD Client",
-      "identityName": "khunny7.DangunLandMUDClient",
-      "publisher": "CN=khunny7",
+      "identityName": "31546YounghoonGim.Dangunmudclient",
+      "publisher": "CN=B3D2417D-BB7D-4AA2-ACED-43B59B9475E0",
       "publisherDisplayName": "Piano8283 Studio",
       "languages": [
         "en-US",
