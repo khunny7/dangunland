@@ -26,8 +26,9 @@ function App({ communicationAdapter }) {
   const [selectedPort, setSelectedPort] = useState('5002');
   const [activePort, setActivePort] = useState(null);
   const [inputValue, setInputValue] = useState('');
-  const [logOpen, setLogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings flyout tab state
+  const [activeTab, setActiveTab] = useState('general');
   const [connEvents, setConnEvents] = useState([]); // {ts,message}
   
   // Settings
@@ -37,6 +38,42 @@ function App({ communicationAdapter }) {
   // Macros and Triggers
   const [macros, setMacros] = useState([]);
   const [triggers, setTriggers] = useState([]);
+
+  // Macro handlers
+  const addMacro = useCallback((macro) => {
+    setMacros(prev => {
+      const nextId = prev.length ? Math.max(...prev.map(m => m.id)) + 1 : 1;
+      return [...prev, { id: nextId, enabled: true, ...macro }];
+    });
+  }, []);
+
+  const editMacro = useCallback((id, updated) => {
+    setMacros(prev => prev.map(m => m.id === id ? { ...m, ...updated } : m));
+  }, []);
+
+  const deleteMacro = useCallback((id) => {
+    setMacros(prev => prev.filter(m => m.id !== id));
+  }, []);
+
+  // Trigger handlers
+  const addTrigger = useCallback((trigger) => {
+    setTriggers(prev => {
+      const nextId = prev.length ? Math.max(...prev.map(t => t.id)) + 1 : 1;
+      return [...prev, { id: nextId, enabled: true, delay: 0, ...trigger }];
+    });
+  }, []);
+
+  const editTrigger = useCallback((id, updated) => {
+    setTriggers(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
+  }, []);
+
+  const deleteTrigger = useCallback((id) => {
+    setTriggers(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const toggleTrigger = useCallback((id) => {
+    setTriggers(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
+  }, []);
 
   // Refs for history and timers
   const historyRef = useRef([]);
@@ -469,21 +506,7 @@ function App({ communicationAdapter }) {
             >
               {status === 'connected' ? '🔌 ' + t('app.disconnect') : '🔌 ' + t('app.connect')}
             </button>
-            
-            <button className="retro-button" onClick={clearTerminal}>
-              {t('app.clear')}
-            </button>
-            
-            <button className="retro-button" onClick={saveLog}>
-              {t('app.saveLog')}
-            </button>
-            
-            <button 
-              className="retro-button" 
-              onClick={() => setLogOpen(o => !o)}
-            >
-              {logOpen ? t('app.hideLog') : t('app.showLog')}
-            </button>
+
           </div>
 
           <input
@@ -520,23 +543,6 @@ function App({ communicationAdapter }) {
             autoComplete="off"
           />
 
-          {logOpen && (
-            <div className="log-panel">
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-                <strong>{t('app.connectionLog')}</strong>
-                <button className="retro-button" onClick={() => setConnEvents([])} style={{fontSize: '10px', padding: '4px 8px'}}>
-                  {t('app.clear')}
-                </button>
-              </div>
-              <div style={{maxHeight: '150px', overflowY: 'auto'}}>
-                {connEvents.slice().reverse().map((e,i) => (
-                  <div key={i} className="log-entry">
-                    [{e.ts}] {e.message}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -545,14 +551,24 @@ function App({ communicationAdapter }) {
         <SettingsFlyout
           isOpen={settingsOpen}
           onClose={() => setSettingsOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           macros={macros}
-          setMacros={setMacros}
+          addMacro={addMacro}
+          editMacro={editMacro}
+          deleteMacro={deleteMacro}
           triggers={triggers}
-          setTriggers={setTriggers}
+          addTrigger={addTrigger}
+          editTrigger={editTrigger}
+          deleteTrigger={deleteTrigger}
+          toggleTrigger={toggleTrigger}
           heartbeatEnabled={heartbeatEnabled}
           setHeartbeatEnabled={setHeartbeatEnabled}
           heartbeatInterval={heartbeatInterval}
           setHeartbeatInterval={setHeartbeatInterval}
+          logs={connEvents}
+          onClearLogs={() => setConnEvents([])}
+          onSaveLogs={saveLog}
         />
       )}
     </div>

@@ -7,19 +7,26 @@ const SettingsFlyout = ({
   onClose, 
   activeTab,
   setActiveTab,
+  // General
   heartbeatEnabled,
   setHeartbeatEnabled,
   heartbeatInterval,
   setHeartbeatInterval,
+  // Macros
   macros,
   addMacro,
   editMacro,
   deleteMacro,
+  // Triggers
   triggers,
   addTrigger,
   editTrigger,
   deleteTrigger,
-  toggleTrigger
+  toggleTrigger,
+  // Logs
+  logs = [],
+  onClearLogs,
+  onSaveLogs
 }) => {
   const { t } = useTranslation();
   
@@ -64,6 +71,13 @@ const SettingsFlyout = ({
           >
             <span className="tab-icon">🎯</span>
             {t('settings.triggers')} ({triggers.filter(t => t.enabled).length}/{triggers.length})
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
+            onClick={() => setActiveTab('logs')}
+          >
+            <span className="tab-icon">📜</span>
+            {t('settings.logs')}
           </button>
         </div>
         
@@ -140,6 +154,27 @@ const SettingsFlyout = ({
               onDelete={deleteTrigger}
               onToggle={toggleTrigger}
             />
+          )}
+
+          {/* Logs Tab */}
+          {activeTab === 'logs' && (
+            <div className="settings-section">
+              <h3 className="section-title">{t('logs.title')}</h3>
+              <div style={{display:'flex', gap:'8px', marginBottom:'12px'}}>
+                <button className="retro-button" onClick={onClearLogs}>{t('logs.clear')}</button>
+                <button className="retro-button" onClick={onSaveLogs}>{t('logs.save')}</button>
+              </div>
+              <div style={{maxHeight:'300px', overflowY:'auto', border:'1px solid #e2e8f0', borderRadius:'4px', background:'#f8fafc'}}>
+                {logs.length === 0 && (
+                  <div style={{padding:'12px', fontStyle:'italic', color:'#64748b'}}>{t('logs.empty')}</div>
+                )}
+                {logs.slice().reverse().map((e,i) => (
+                  <div key={i} style={{padding:'8px 12px', borderBottom:'1px solid #e2e8f0', fontFamily:'Courier New, monospace', fontSize:'12px'}}>
+                    <strong>[{e.ts}]</strong> {e.message}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

@@ -21,6 +21,7 @@
     "general": "General",
     "macros": "Macros",
     "triggers": "Triggers",
+    "logs": "Logs",
     "language": "Language",
     "theme": "Theme",
     "terminal": "Terminal",
@@ -39,6 +40,12 @@
     "tip2": "Triggers can auto-respond to server messages",
     "tip3": "Up/Down arrows browse command history",
     "tip4": "Heartbeat prevents idle disconnection"
+  },
+  "logs": {
+    "title": "Connection Log",
+    "clear": "Clear Log",
+    "save": "Save Log",
+    "empty": "No connection events yet."
   },
   "macros": {
     "title": "Macro Management",
