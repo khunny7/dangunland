@@ -544,3 +544,144 @@
     align-self: flex-end;
   }
 }
+
+/* =====================================================================
+   Retro Theme Overrides (Unified with Main Computer Case Styling)
+   Instead of a slide-over panel, visually emulate a retro hardware card.
+   We override after original rules to avoid invasive refactors.
+   ===================================================================== */
+
+:root {
+  /* fallback retro vars if not already declared */
+  --retro-beige: #f5f3e7;
+  --retro-dark-beige: #e8e5d3;
+  --retro-border: #c4c0a8;
+  --retro-shadow: #a8a394;
+}
+
+.settings-backdrop {
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(2px);
+}
+
+.settings-flyout {
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+  width: 860px;
+  max-width: 95vw;
+  max-height: 85vh;
+  background: var(--retro-beige);
+  border: 4px solid var(--retro-border);
+  border-radius: 12px;
+  box-shadow:
+    inset 2px 2px 6px rgba(255,255,255,0.9),
+    inset -2px -2px 6px var(--retro-shadow),
+    8px 8px 24px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: retroPop .28s ease;
+}
+
+@keyframes retroPop {
+  0% { transform: translate(-50%, -48%) scale(.96); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.flyout-header {
+  background: var(--retro-dark-beige);
+  border-bottom: 3px solid var(--retro-border);
+  padding: 10px 16px;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.12);
+}
+
+.flyout-title {
+  font-size: 16px;
+  margin: 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+.close-button {
+  background: var(--retro-beige);
+  border: 2px solid var(--retro-border);
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #444;
+  box-shadow: 2px 2px 4px var(--retro-shadow), inset 1px 1px 2px rgba(255,255,255,0.8);
+  transition: all .15s ease;
+}
+.close-button:hover { background: var(--retro-dark-beige); transform: translateY(-1px); }
+.close-button:active { transform: translateY(1px); }
+
+.flyout-tabs {
+  background: var(--retro-beige);
+  padding: 8px 10px 4px 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 3px solid var(--retro-border);
+}
+
+.tab-button {
+  background: var(--retro-beige);
+  border: 2px solid var(--retro-border);
+  border-radius: 6px 6px 2px 2px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: .5px;
+  color: #333;
+  box-shadow: 2px 2px 4px var(--retro-shadow), inset 1px 1px 2px rgba(255,255,255,0.8);
+  text-transform: uppercase;
+  transition: all .15s ease;
+}
+.tab-button:hover { background: var(--retro-dark-beige); transform: translateY(-1px); }
+.tab-button:active { transform: translateY(1px); }
+.tab-button.active { background: var(--retro-dark-beige); box-shadow: inset 2px 2px 4px rgba(0,0,0,0.18), inset -1px -1px 2px rgba(255,255,255,0.6); }
+
+.flyout-content { padding: 16px 20px 24px 20px; }
+.settings-section { padding: 6px 4px 22px 4px; }
+.section-title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #222; }
+
+.macro-form, .trigger-form, .info-panel {
+  background: var(--retro-dark-beige);
+  border: 2px solid var(--retro-border);
+  border-radius: 8px;
+  box-shadow: inset 1px 1px 2px rgba(255,255,255,0.8), inset -1px -1px 2px rgba(0,0,0,0.15);
+}
+
+.form-input, .form-select {
+  background: var(--retro-beige);
+  border: 2px solid var(--retro-border);
+  box-shadow: inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(0,0,0,0.2);
+  color: #222;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: #2970bb; }
+
+.submit-button, .cancel-button, .edit-button, .delete-button, .toggle-btn {
+  background: var(--retro-beige);
+  border: 2px solid var(--retro-border);
+  box-shadow: 2px 2px 4px var(--retro-shadow), inset 1px 1px 2px rgba(255,255,255,0.8);
+  font-weight: bold;
+  letter-spacing: .5px;
+}
+.submit-button:hover, .cancel-button:hover, .edit-button:hover, .delete-button:hover, .toggle-btn:hover { background: var(--retro-dark-beige); }
+
+.list-item { background: var(--retro-dark-beige); border: 2px solid var(--retro-border); }
+.list-item.enabled { border-left: 4px solid #2970bb; }
+
+/* Logs tab list styling alignment */
+
+@media (max-width: 900px) {
+  .settings-flyout { width: 95vw; max-height: 90vh; }
+  .form-row { flex-direction: column; }
+  .list-item { flex-direction: column; align-items: flex-start; }
+  .item-actions { align-self: flex-end; }
+}
+
