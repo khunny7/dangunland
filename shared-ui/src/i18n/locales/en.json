@@ -47,6 +47,9 @@
     "save": "Save Log",
     "empty": "No connection events yet."
   },
+  "macroBoard": {
+    "title": "Macros"
+  },
   "macros": {
     "title": "Macro Management",
     "description": "Execute commands with keyboard shortcuts.",

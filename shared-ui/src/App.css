@@ -1608,3 +1608,114 @@ body {
   font-style: italic;
   font-size: 11px;
 }
+
+/* ==================== Macro Board (Sticky Notes) ==================== */
+.macro-board {
+  position: fixed;
+  top: 120px;
+  right: 20px;
+  width: 180px;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 900;
+  pointer-events: none; /* container doesn’t intercept scroll */
+}
+
+.macro-board-header {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-align: center;
+  background: linear-gradient(145deg, #f0ecd8, #e0dcc8);
+  border: 2px solid var(--retro-border);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #444;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.25), inset 1px 1px 2px rgba(255,255,255,0.8);
+  text-transform: uppercase;
+  pointer-events: auto;
+}
+
+.macro-board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+  pointer-events: auto;
+}
+
+.macro-board-list::-webkit-scrollbar {
+  width: 6px;
+}
+.macro-board-list::-webkit-scrollbar-thumb { background: var(--retro-border); }
+
+.macro-sticky {
+  position: relative;
+  background: #fffcd7;
+  background: linear-gradient(135deg, #fffcd7 0%, #fbf3b5 100%);
+  border: 2px solid #e3dca0;
+  border-radius: 4px 4px 6px 6px;
+  padding: 10px 8px 12px 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #333;
+  font-weight: bold;
+  line-height: 1.3;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.25), inset 1px 1px 2px rgba(255,255,255,0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  pointer-events: auto;
+}
+
+.macro-sticky::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 10px;
+  background: linear-gradient(145deg, #f0ecd8, #e0dcc8);
+  border: 1px solid var(--retro-border);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+.macro-sticky:hover {
+  transform: translateY(-2px) rotate(-1deg);
+  box-shadow: 3px 4px 8px rgba(0,0,0,0.35), inset 1px 1px 2px rgba(255,255,255,0.8);
+  background: linear-gradient(135deg, #fffde5 0%, #fcf6c7 100%);
+}
+
+.macro-sticky:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.3), inset -1px -1px 2px rgba(0,0,0,0.15);
+}
+
+.macro-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.macro-trigger {
+  font-size: 9px;
+  color: #666;
+  font-weight: normal;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 900px) {
+  .macro-board { display: none; }
+}

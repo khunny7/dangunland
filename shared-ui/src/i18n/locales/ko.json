@@ -47,6 +47,9 @@
     "save": "로그 저장",
     "empty": "아직 연결 이벤트가 없습니다."
   },
+  "macroBoard": {
+    "title": "매크로"
+  },
   "macros": {
     "title": "매크로 관리",
     "description": "키보드 단축키로 명령어를 실행할 수 있습니다.",

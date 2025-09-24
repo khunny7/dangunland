@@ -6,6 +6,7 @@ import './App.css';
 import Logo from './components/Logo';
 import SettingsFlyout from './components/SettingsFlyout';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import MacroBoard from './components/MacroBoard';
 
 function useStableCallback(cb) {
   const ref = useRef(cb);
@@ -385,6 +386,23 @@ function App({ communicationAdapter }) {
     setTimeout(() => inputRef.current?.focus(), 0);
   }, [inputValue, expandMacros, communicationAdapter]);
 
+  // Execute a macro command directly (from MacroBoard click)
+  const executeMacroCommand = useCallback((command) => {
+    if (!command) return;
+    if (communicationAdapter && communicationAdapter.isConnected()) {
+      const payload = command.replace(/[\r\n]+$/g, '') + '\r\n';
+      communicationAdapter.sendInput(payload);
+      // Update last input time to avoid heartbeat firing immediately
+      lastInputTimeRef.current = Date.now();
+      // Provide subtle terminal feedback
+      if (xtermRef.current) {
+        try {
+          xtermRef.current.write(`\x1b[33m> ${command}\x1b[0m\r\n`);
+        } catch(e) {}
+      }
+    }
+  }, [communicationAdapter]);
+
   const downloadText = (text, name) => {
     const blob = new Blob([text], { type: 'text/plain' });
     const a = document.createElement('a');
@@ -545,6 +563,9 @@ function App({ communicationAdapter }) {
 
         </div>
       </div>
+
+  {/* Macro Board (sticky notes) */}
+  <MacroBoard macros={macros} onExecute={executeMacroCommand} />
 
       {/* Settings Flyout */}
       {settingsOpen && (
