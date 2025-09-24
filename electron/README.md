@@ -65,12 +65,13 @@ React App → ElectronIPCAdapter → IPC → Main Process → Direct Telnet → 
 
 ## Windows Store Deployment
 
-The app is configured for Windows Store submission with:
+The app is **READY** for Windows Store submission with:
 
 - **App Identity**: `khunny7.DangunLandMUDClient`
 - **Publisher**: `CN=khunny7`
 - **Capabilities**: Full trust, network access
 - **Package Format**: APPX
+- **All Required Assets**: ✅ Complete (see `assets/` directory)
 
 ### Store Package Creation
 ```bash
@@ -80,15 +81,31 @@ npm run dist:win-store
 This creates an `.appx` file in the `release` directory ready for Store submission.
 
 ### Requirements for Store
-- Valid Windows Developer Account
-- Code signing certificate (for trusted deployment)
-- Store listing with descriptions, screenshots, etc.
+- Valid Windows Developer Account ($19 USD one-time fee)
+- App screenshots (4+ required, 1366x768 or higher)
+- Store listing with descriptions, categories, age rating
+- Code signing certificate (optional but recommended for sideloading)
+
+### Complete Submission Guide
+See [WINDOWS_STORE.md](./WINDOWS_STORE.md) for detailed instructions on:
+- Creating Microsoft Developer Account
+- Store listing requirements
+- Screenshot specifications
+- Submission process
+- Testing procedures
 
 ## Icons and Assets
 
-The app uses SVG icons converted to multiple formats for Windows:
-- `icon.ico` - Main application icon
-- Store logos in various sizes (Square44x44, Square150x150, etc.)
+✅ **All Windows Store assets have been created:**
+- `StoreLogo.png` (50x50) - Store listing logo  
+- `Square44x44Logo.png` (44x44) - App list icon
+- `Square150x150Logo.png` (150x150) - Medium tile
+- `Wide310x150Logo.png` (310x150) - Wide tile  
+- `LargeTile.png` (310x310) - Large tile
+- `SmallTile.png` (71x71) - Small tile
+- `SplashScreen.png` (620x300) - Launch screen
+- `icon.ico` - Main application icon (multi-resolution)
+- `Package.appxmanifest` - Store package manifest
 
 ## Security
 

@@ -1,0 +1,99 @@
+<svg width="620" height="300" viewBox="0 0 620 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient for wide format -->
+  <defs>
+    <linearGradient id="wideBgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0f0f0f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="terminalWideGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e1e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1" />
+    </linearGradient>
+    <filter id="wideGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Full wide background -->
+  <rect x="0" y="0" width="620" height="300" rx="20" fill="url(#wideBgGradient)" stroke="#00ff41" stroke-width="4"/>
+  
+  <!-- Left terminal section -->
+  <rect x="30" y="40" width="200" height="220" rx="12" fill="url(#terminalWideGradient)" stroke="#00ff41" stroke-width="2"/>
+  
+  <!-- Terminal header -->
+  <rect x="30" y="40" width="200" height="35" rx="12" fill="#2a2a2a"/>
+  <rect x="30" y="65" width="200" height="10" fill="#2a2a2a"/>
+  
+  <!-- Terminal control buttons -->
+  <circle cx="50" cy="57" r="5" fill="#ff5f56"/>
+  <circle cx="65" cy="57" r="5" fill="#ffbd2e"/>
+  <circle cx="80" cy="57" r="5" fill="#27ca3f"/>
+  
+  <!-- Central DANGUN text with prominent display -->
+  <text x="310" y="120" text-anchor="middle" fill="#00ff41" font-size="48" font-family="monospace" font-weight="bold" filter="url(#wideGlow)">DANGUN</text>
+  
+  <!-- Subtitle -->
+  <text x="310" y="155" text-anchor="middle" fill="#00aa33" font-size="22" font-family="monospace">MUD CLIENT</text>
+  
+  <!-- Korean characters prominently displayed -->
+  <text x="250" y="200" text-anchor="middle" fill="#00aa33" font-size="36" font-family="serif" opacity="0.8">단</text>
+  <text x="370" y="200" text-anchor="middle" fill="#00aa33" font-size="36" font-family="serif" opacity="0.8">군</text>
+  
+  <!-- Right side network visualization -->
+  <rect x="390" y="40" width="200" height="220" rx="12" fill="url(#terminalWideGradient)" stroke="#00ff41" stroke-width="2"/>
+  
+  <!-- Network connection lines spanning across -->
+  <g stroke="#00ff41" stroke-width="3" fill="none">
+    <!-- Horizontal connection lines -->
+    <line x1="240" y1="150" x2="280" y2="150"/>
+    <line x1="340" y1="150" x2="380" y2="150"/>
+    <line x1="280" y1="150" x2="310" y2="170"/>
+    <line x1="340" y1="150" x2="310" y2="170"/>
+    
+    <!-- Network nodes -->
+    <circle cx="260" cy="150" r="6" fill="#00ff41"/>
+    <circle cx="360" cy="150" r="6" fill="#00ff41"/>
+    <circle cx="310" cy="170" r="8" fill="#00ff41"/>
+  </g>
+  
+  <!-- Left terminal content simulation -->
+  <g fill="#00ff41" opacity="0.6" font-family="monospace" font-size="10">
+    <text x="40" y="95">$ telnet dangunland</text>
+    <text x="40" y="110">Connected to server</text>
+    <text x="40" y="125">Welcome to 단군의땅</text>
+  </g>
+  
+  <!-- Right server status -->
+  <g fill="#00ff41" opacity="0.6" font-family="monospace" font-size="10">
+    <text x="400" y="95">Server Status: ON</text>
+    <text x="400" y="110">Players: 127</text>
+    <text x="400" y="125">Ping: 23ms</text>
+  </g>
+  
+  <!-- Server representation -->
+  <rect x="465" y="180" width="50" height="30" rx="5" fill="#00ff41" opacity="0.8"/>
+  <rect x="470" y="185" width="40" height="4" fill="#000"/>
+  <rect x="470" y="195" width="40" height="4" fill="#000"/>
+  
+  <!-- Animated cursor -->
+  <rect x="520" y="190" width="20" height="8" rx="2" fill="#00ff41" opacity="0.9">
+    <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Data flow particles across the wide format -->
+  <g fill="#00ff41" opacity="0.7">
+    <circle cx="180" cy="155" r="2">
+      <animate attributeName="cx" values="180;440;180" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="440" cy="155" r="2">
+      <animate attributeName="cx" values="440;180;440" dur="3.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

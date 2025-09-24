@@ -1,23 +1,85 @@
-<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <!-- Terminal frame -->
-  <rect x="2" y="4" width="28" height="24" rx="2" fill="#0a0a0a" stroke="#00ff41" stroke-width="1"/>
-  <!-- Terminal header -->
-  <rect x="2" y="4" width="28" height="4" rx="2" fill="#1a1a1a"/>
-  <!-- Terminal dots -->
-  <circle cx="6" cy="6" r="0.75" fill="#ff5f56"/>
-  <circle cx="9" cy="6" r="0.75" fill="#ffbd2e"/>
-  <circle cx="12" cy="6" r="0.75" fill="#27ca3f"/>
-  <!-- Main text -->
-  <text x="16" y="16" text-anchor="middle" fill="#00ff41" font-size="5" font-family="monospace" font-weight="bold">DANGUN</text>
-  <!-- Network lines -->
-  <line x1="6" y1="20" x2="12" y2="20" stroke="#00ff41" stroke-width="0.5"/>
-  <line x1="20" y1="20" x2="26" y2="20" stroke="#00ff41" stroke-width="0.5"/>
-  <line x1="12" y1="20" x2="16" y2="22" stroke="#00ff41" stroke-width="0.5"/>
-  <line x1="20" y1="20" x2="16" y2="22" stroke="#00ff41" stroke-width="0.5"/>
-  <!-- MUD server -->
-  <circle cx="16" cy="23" r="1.5" fill="#00ff41" opacity="0.8"/>
-  <!-- Cursor -->
-  <rect x="22" y="25" width="3" height="1" fill="#00ff41" opacity="0.8">
-    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="terminalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e1e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Full square background - no circle -->
+  <rect x="0" y="0" width="512" height="512" rx="32" fill="url(#bgGradient)" stroke="#00ff41" stroke-width="8"/>
+  
+  <!-- Terminal window frame -->
+  <rect x="60" y="100" width="392" height="312" rx="16" fill="url(#terminalGradient)" stroke="#00ff41" stroke-width="4"/>
+  
+  <!-- Terminal header bar -->
+  <rect x="60" y="100" width="392" height="56" rx="16" fill="#2a2a2a"/>
+  <rect x="60" y="140" width="392" height="16" fill="#2a2a2a"/>
+  
+  <!-- Terminal control buttons -->
+  <circle cx="100" cy="128" r="10" fill="#ff5f56"/>
+  <circle cx="132" cy="128" r="10" fill="#ffbd2e"/>
+  <circle cx="164" cy="128" r="10" fill="#27ca3f"/>
+  
+  <!-- Terminal title -->
+  <text x="256" y="135" text-anchor="middle" fill="#888" font-size="18" font-family="monospace" font-weight="bold">DangunLand MUD Client</text>
+  
+  <!-- Main DANGUN text with glow effect -->
+  <text x="256" y="250" text-anchor="middle" fill="#00ff41" font-size="56" font-family="monospace" font-weight="bold" filter="url(#glow)">DANGUN</text>
+  
+  <!-- Subtitle text -->
+  <text x="256" y="285" text-anchor="middle" fill="#00aa33" font-size="24" font-family="monospace">MUD CLIENT</text>
+  
+  <!-- Network connection visualization -->
+  <g stroke="#00ff41" stroke-width="4" fill="none">
+    <!-- Connection lines -->
+    <line x1="120" y1="320" x2="180" y2="320"/>
+    <line x1="332" y1="320" x2="392" y2="320"/>
+    <line x1="180" y1="320" x2="230" y2="340"/>
+    <line x1="332" y1="320" x2="282" y2="340"/>
+    <line x1="230" y1="340" x2="282" y2="340"/>
+    
+    <!-- Network nodes -->
+    <circle cx="150" cy="320" r="8" fill="#00ff41"/>
+    <circle cx="362" cy="320" r="8" fill="#00ff41"/>
+    <circle cx="256" cy="340" r="10" fill="#00ff41"/>
+  </g>
+  
+  <!-- Server representation -->
+  <rect x="230" y="365" width="52" height="28" rx="6" fill="#00ff41" opacity="0.8"/>
+  <rect x="236" y="371" width="40" height="5" fill="#000"/>
+  <rect x="236" y="380" width="40" height="5" fill="#000"/>
+  
+  <!-- Animated cursor/terminal indicator -->
+  <rect x="320" y="375" width="28" height="10" rx="3" fill="#00ff41" opacity="0.9">
+    <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite"/>
   </rect>
+  
+  <!-- Korean characters (단군) as decorative elements -->
+  <text x="150" y="385" text-anchor="middle" fill="#00aa33" font-size="28" font-family="serif" opacity="0.7">단</text>
+  <text x="362" y="385" text-anchor="middle" fill="#00aa33" font-size="28" font-family="serif" opacity="0.7">군</text>
+  
+  <!-- Data flow particles -->
+  <g fill="#00ff41" opacity="0.8">
+    <circle cx="200" cy="325" r="3">
+      <animate attributeName="cx" values="200;250;200" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="312" cy="325" r="3">
+      <animate attributeName="cx" values="312;262;312" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
 </svg>

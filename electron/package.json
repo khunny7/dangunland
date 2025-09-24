@@ -2,7 +2,9 @@
   "name": "dangunland-electron",
   "productName": "DangunLand MUD Client",
   "version": "1.0.0",
-  "description": "Desktop MUD client for DangunLand with direct telnet support",
+  "description": "Desktop MUD client for DangunLand with direct telnet support, Korean encoding, and Windows Store integration",
+  "keywords": ["mud", "client", "dangunland", "korean", "gaming", "telnet", "euc-kr"],
+  "homepage": "https://github.com/khunny7/dangunland",
   "main": "src/main.js",
   "private": true,
   "scripts": {
@@ -14,7 +16,8 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
-    "dist:win-store": "electron-builder --win --publish=never -c.win.target=appx"
+    "dist:win-store": "electron-builder --win --publish=never -c.win.target=appx",
+    "check-store-ready": "node scripts/prepare-store.js"
   },
   "dependencies": {
     "dangunland-shared-ui": "file:../shared-ui",
@@ -34,6 +37,7 @@
   "build": {
     "appId": "com.khunny7.dangunland",
     "productName": "DangunLand MUD Client",
+    "electronVersion": "32.0.0",
     "directories": {
       "output": "release"
     },
@@ -56,7 +60,9 @@
       "icon": "assets/icon.ico",
       "publisherName": "khunny7",
       "certificateFile": null,
-      "certificatePassword": null
+      "certificatePassword": null,
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false
     },
     "appx": {
       "applicationId": "khunny7.DangunLandMUDClient",
@@ -65,7 +71,9 @@
       "identityName": "khunny7.DangunLandMUDClient",
       "publisher": "CN=khunny7",
       "publisherDisplayName": "khunny7",
-      "languages": ["en-US", "ko-KR"]
+      "languages": ["en-US", "ko-KR"],
+      "setBuildNumber": true,
+      "showNameOnTiles": true
     },
     "nsis": {
       "oneClick": false,

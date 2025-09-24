@@ -16,7 +16,7 @@
     <DisplayName>DangunLand MUD Client</DisplayName>
     <PublisherDisplayName>khunny7</PublisherDisplayName>
     <Logo>assets\StoreLogo.png</Logo>
-    <Description>A modern MUD client for DangunLand with retro 80s computer aesthetic. Connect to Korean MUD servers with proper EUC-KR encoding support, advanced macro system, and command triggers.</Description>
+    <Description>A modern MUD client for connecting to DangunLand (단군의땅) Korean MUD server. Features direct telnet connectivity, proper EUC-KR encoding support, retro terminal interface, advanced macro system, command triggers, and heartbeat functionality. Perfect for Korean MUD gaming with full desktop integration.</Description>
   </Properties>
 
   <Dependencies>
