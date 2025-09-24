@@ -43,7 +43,8 @@ function createWindow() {
 
   // Load the renderer
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    const devServerUrl = 'http://localhost:3001';
+    mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
