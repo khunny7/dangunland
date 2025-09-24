@@ -41,6 +41,7 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "app-builder-bin": "^5.0.0-alpha.10",
     "concurrently": "^9.2.1"
   }
 }
