@@ -21,13 +21,22 @@ export class WebSocketCommunicationAdapter {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.close();
     }
-
     const host = this.getWebSocketHost();
-    const wsUrl = `ws://${host}/ws`;
+    // Use secure websocket when the page itself is loaded via https
+    const isBrowser = typeof window !== 'undefined';
+    const protocol = isBrowser && window.location.protocol === 'https:' ? 'wss' : 'ws';
+    // Allow a global override (e.g., window.__WS_BASE_HOST = 'somehost:1234') or env-like injection
+    let finalHost = host;
+    if (isBrowser && window.__WS_BASE_HOST) {
+      finalHost = window.__WS_BASE_HOST;
+    }
+    const wsUrl = `${protocol}://${finalHost}/ws`;
     
     this.onStatusChange?.('connecting', port);
     
-    this.ws = new WebSocket(wsUrl);
+  this.ws = new WebSocket(wsUrl);
+  // Console log for diagnostics (helps identify mixed content issues in production)
+  try { console.debug('[WebSocketAdapter] Connecting to', wsUrl); } catch {}
     // Ensure we always receive raw ArrayBuffer (not Blob) for binary frames
     this.ws.binaryType = 'arraybuffer';
     
