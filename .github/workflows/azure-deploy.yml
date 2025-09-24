@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and Deploy (Web + Backend) to Azure Web App - dangunland
 
 on:
@@ -9,12 +6,11 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '20.x'  # Use LTS for Azure runtime compatibility; raise to 22.x once confirmed.
-  BUILD_DIR: deploy
+  NODE_VERSION: '20.x'
+  DEPLOY_DIR: deploy
 
 jobs:
   build:
-    name: Build web + prepare backend
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,59 +18,59 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install workspaces
-        run: |
-          npm install
+      - name: Install (workspaces)
+        run: npm install
 
-      - name: Build web client (shared-ui + web)
-        run: |
-          npm run build:web
+      # Build the web (assumes root script builds shared-ui then web)
+      - name: Build web
+        run: npm run build:web || npm run build
 
       - name: Prepare deploy folder
         run: |
-          rm -rf $BUILD_DIR
-          mkdir -p $BUILD_DIR
-          # Copy backend runtime (source + package manifest)
-          mkdir -p $BUILD_DIR/backend/src
-          cp -R backend/src $BUILD_DIR/backend/
-          cp backend/package.json $BUILD_DIR/backend/
-          # Copy built static assets (prefer backend/dist for server.js lookup)
-          mkdir -p $BUILD_DIR/backend/dist
-          cp -R web/dist/* $BUILD_DIR/backend/dist/
-          # Root server start uses backend/src/server.js via root start script, include root package.json if desired
-          cp package.json $BUILD_DIR/
-          # (Optional) prune dev dependencies inside deploy if using root start; here we install only backend production deps at App Service
-          # Create minimal start script wrapper if needed (not required now)
-          echo "Contents of deploy folder:" && find $BUILD_DIR -maxdepth 3 -type f | sed 's/^/  /'
+          set -e
+          rm -rf "${DEPLOY_DIR}"
+          mkdir -p "${DEPLOY_DIR}/backend/dist"
+          # Copy backend runtime code
+          cp -R backend/src "${DEPLOY_DIR}/backend/"
+          cp backend/package.json "${DEPLOY_DIR}/backend/"
+          # Copy built web assets into backend/dist (server looks there first)
+          if [ -d web/dist ]; then
+            cp -R web/dist/* "${DEPLOY_DIR}/backend/dist/"
+          else
+            echo "ERROR: web/dist not found. Build step failed?"
+            exit 1
+          fi
+          # Optional: include root package.json only if Azure starts from root
+          cp package.json "${DEPLOY_DIR}/" || true
+          echo "Contents of deploy folder:"
+          find "${DEPLOY_DIR}" -maxdepth 4 -type f | sed 's/^/  /'
 
-      - name: Archive deploy artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deploy-package
-          path: ${{ env.BUILD_DIR }}
-          if-no-files-found: error
+          name: deploy
+          path: ${{ env.DEPLOY_DIR }}
 
   deploy:
-    name: Deploy to Azure Web App
     runs-on: ubuntu-latest
     needs: build
     permissions:
       id-token: write
       contents: read
     steps:
-      - name: Download build artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: deploy-package
+          name: deploy
           path: .
 
-      - name: Login to Azure
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -86,9 +82,4 @@ jobs:
         with:
           app-name: 'dangunland'
           slot-name: 'Production'
-          package: deploy
-
-      - name: Post-deploy info
-        run: |
-          echo "Deployment complete. If server fails to start, ensure Azure App Service Node version matches $NODE_VERSION." 
-          
+          package: .
