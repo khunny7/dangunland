@@ -193,8 +193,8 @@ function App({ communicationAdapter }) {
       const shouldSendHeartbeat = timeSinceLastInput >= (heartbeatInterval * 1000);
 
       if (shouldSendHeartbeat && communicationAdapter && communicationAdapter.isConnected()) {
-        communicationAdapter.sendInput('\n');
-        console.log('Heartbeat sent (via adapter)');
+        communicationAdapter.sendInput('\r\n');
+        console.log('Heartbeat sent (via adapter, CRLF)');
       }
     }, heartbeatInterval * 1000);
   }, [heartbeatEnabled, heartbeatInterval, communicationAdapter]);
@@ -229,7 +229,7 @@ function App({ communicationAdapter }) {
 
       if (matches && communicationAdapter && communicationAdapter.isConnected()) {
         setTimeout(() => {
-          const payload = trigger.command + '\n';
+          const payload = trigger.command.replace(/[\r\n]+$/g, '') + '\r\n';
           communicationAdapter.sendInput(payload);
           console.log(`Trigger fired: "${trigger.pattern}" -> "${trigger.command}"`);
         }, trigger.delay || 0);
@@ -317,7 +317,8 @@ function App({ communicationAdapter }) {
 
   const sendLine = useCallback(() => {
     const raw = inputValue;
-    let line = raw.trimEnd();
+    // Remove any trailing CR/LF so we don't send double newlines
+    let line = raw.replace(/[\r\n]+$/g, '').trimEnd();
     
     // Update last input time when user sends a command
     lastInputTimeRef.current = Date.now();
@@ -326,7 +327,8 @@ function App({ communicationAdapter }) {
     line = expandMacros(line);
     
     // Always send something, even if empty (just newline)
-    const dataToSend = line + '\n';
+    // Use CRLF to satisfy Telnet/MUD servers expecting carriage return + line feed
+    const dataToSend = line + '\r\n';
     
     // Push original input to history (not expanded), only if non-empty and different from last
     if (raw.trim()) {
@@ -376,7 +378,7 @@ function App({ communicationAdapter }) {
       const macro = macros.find(m => m.type === 'function' && m.trigger === functionKey);
       if (macro && communicationAdapter && communicationAdapter.isConnected()) {
         e.preventDefault();
-        communicationAdapter.sendInput(macro.command + '\n');
+        communicationAdapter.sendInput(macro.command.replace(/[\r\n]+$/g, '') + '\r\n');
         console.log(`Function key macro fired: ${functionKey} -> ${macro.command}`);
         return true;
       }

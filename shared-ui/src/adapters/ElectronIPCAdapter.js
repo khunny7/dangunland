@@ -60,8 +60,15 @@ export class ElectronIPCAdapter {
 
   sendInput(input) {
     if (!this.electronAPI || !this.currentPort) return;
-    
-    this.electronAPI.sendToMud(input + '\n');
+    // Normalize trailing newlines to exactly one CRLF to avoid duplicates (e.g., "\r\n\n").
+    try {
+      const str = String(input);
+      const normalized = str.replace(/(?:\r\n|\r|\n)+$/g, '\r\n');
+      this.electronAPI.sendToMud(normalized);
+    } catch {
+      // Fallback: send raw input if normalization fails for any reason
+      this.electronAPI.sendToMud(input);
+    }
   }
 
   saveLog() {

@@ -67,13 +67,6 @@ function buildCommand(cmd, opt) {
   return Buffer.from([IAC, cmd, opt]);
 }
 
-function sendInitialNegotiation(socket) {
-  // Send basic telnet negotiations
-  socket.write(buildCommand(DO, OPT_SUPPRESS_GA));
-  socket.write(buildCommand(WILL, OPT_ECHO));
-  socket.write(buildCommand(DO, OPT_NAWS));
-}
-
 function processTelnetData(buffer, socket) {
   const appBytes = [];
   let i = 0;
@@ -113,18 +106,44 @@ function processTelnetData(buffer, socket) {
 }
 
 function handleNegotiation(cmd, opt, socket) {
-  // Basic telnet negotiation responses
+  // Reactive negotiation like backend/native telnet
   if (cmd === DO) {
-    if (opt === OPT_ECHO || opt === OPT_SUPPRESS_GA) {
-      socket.write(buildCommand(WILL, opt));
+    if (opt === OPT_SUPPRESS_GA) {
+  const resp = buildCommand(WILL, opt);
+  socket.write(resp);
+    } else if (opt === OPT_NAWS) {
+  const will = buildCommand(WILL, opt);
+  socket.write(will);
+      if (!socket._sentInitialNAWS) {
+        const cols = 80;
+        const rows = 24;
+        const naws = Buffer.from([
+          IAC, SB, OPT_NAWS,
+          (cols >> 8) & 0xff, cols & 0xff,
+          (rows >> 8) & 0xff, rows & 0xff,
+          IAC, SE
+        ]);
+        socket.write(naws);
+        socket._sentInitialNAWS = true;
+        
+      }
+    } else if (opt === OPT_ECHO) {
+  const resp = buildCommand(WILL, opt);
+  socket.write(resp);
     } else {
-      socket.write(buildCommand(WONT, opt));
+  const resp = buildCommand(WONT, opt);
+  socket.write(resp);
     }
   } else if (cmd === WILL) {
-    if (opt === OPT_ECHO || opt === OPT_SUPPRESS_GA) {
-      socket.write(buildCommand(DO, opt));
+    if (opt === OPT_ECHO) {
+  const resp = buildCommand(DO, opt);
+  socket.write(resp);
+    } else if (opt === OPT_SUPPRESS_GA) {
+  const resp = buildCommand(DO, opt);
+  socket.write(resp);
     } else {
-      socket.write(buildCommand(DONT, opt));
+  const resp = buildCommand(DONT, opt);
+  socket.write(resp);
     }
   }
 }
@@ -147,7 +166,6 @@ ipcMain.handle('connect-to-mud', async (event, port) => {
     mudSocket.connect(parseInt(port), TARGET_HOST, () => {
       console.log(`Connected to ${TARGET_HOST}:${port}`);
       mainWindow.webContents.send('status-change', 'connected', port);
-      sendInitialNegotiation(mudSocket);
       resolve(true);
     });
 

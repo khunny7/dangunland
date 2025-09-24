@@ -77,16 +77,6 @@ function buildCommand(cmd, opt) {
   return Buffer.from([IAC, cmd, opt]);
 }
 
-function sendInitialNegotiation(socket) {
-  // Advertise willingness for basic options and request echo off server-side
-  const seq = Buffer.concat([
-    buildCommand(WILL, OPT_SUPPRESS_GA),
-    buildCommand(DO, OPT_ECHO),
-    buildCommand(WILL, OPT_NAWS)
-  ]);
-  socket.write(seq);
-}
-
 // Minimal Telnet parser: strips commands, responds to DO/WILL negotiation
 function processTelnetData(buffer, socket) {
   const appBytes = [];
@@ -127,18 +117,45 @@ function processTelnetData(buffer, socket) {
 }
 
 function handleNegotiation(cmd, opt, socket) {
-  // Policy: accept NAWS & SUPPRESS_GA; allow server to control echo
+  // Reactive negotiation like native telnet: respond to server DO/WILL.
   if (cmd === DO) {
-    if (opt === OPT_NAWS || opt === OPT_SUPPRESS_GA) {
-      socket.write(buildCommand(WILL, opt));
+    if (opt === OPT_SUPPRESS_GA) {
+  const resp = buildCommand(WILL, opt);
+  socket.write(resp);
+    } else if (opt === OPT_NAWS) {
+  const will = buildCommand(WILL, opt);
+  socket.write(will);
+      // Send initial NAWS subnegotiation (default 80x24) once
+      if (!socket._sentInitialNAWS) {
+        const cols = 80;
+        const rows = 24;
+        const naws = Buffer.from([
+          IAC, SB, OPT_NAWS,
+          (cols >> 8) & 0xff, cols & 0xff,
+          (rows >> 8) & 0xff, rows & 0xff,
+          IAC, SE
+        ]);
+  socket.write(naws);
+  socket._sentInitialNAWS = true;
+      }
+    } else if (opt === OPT_ECHO) {
+      // Let server control echo if it requests DO ECHO
+  const resp = buildCommand(WILL, opt);
+  socket.write(resp);
     } else {
-      socket.write(buildCommand(WONT, opt));
+  const resp = buildCommand(WONT, opt);
+  socket.write(resp);
     }
   } else if (cmd === WILL) {
     if (opt === OPT_ECHO) {
-      socket.write(buildCommand(DO, opt));
+  const resp = buildCommand(DO, opt);
+  socket.write(resp);
+    } else if (opt === OPT_SUPPRESS_GA) {
+  const resp = buildCommand(DO, opt);
+  socket.write(resp);
     } else {
-      socket.write(buildCommand(DONT, opt));
+  const resp = buildCommand(DONT, opt);
+  socket.write(resp);
     }
   }
 }
@@ -190,7 +207,6 @@ wss.on('connection', (ws) => {
       connected = true;
       connectedPort = port;
       sendJSON(ws, { t: 'status', data: `connected:${TARGET_HOST}:${port}` });
-      sendInitialNegotiation(socket);
     });
     socket.on('error', (e) => {
       if (!connected) {
