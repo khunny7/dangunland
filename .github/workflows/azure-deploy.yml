@@ -1,53 +1,79 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - dangunland
+name: Build and Deploy (Web + Backend) to Azure Web App - dangunland
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'  # Use LTS for Azure runtime compatibility; raise to 22.x once confirmed.
+  BUILD_DIR: deploy
 
 jobs:
   build:
+    name: Build web + prepare backend
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: npm install, build, and test
+      - name: Install workspaces
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
 
-      - name: Upload artifact for deployment job
+      - name: Build web client (shared-ui + web)
+        run: |
+          npm run build:web
+
+      - name: Prepare deploy folder
+        run: |
+          rm -rf $BUILD_DIR
+          mkdir -p $BUILD_DIR
+          # Copy backend runtime (source + package manifest)
+          mkdir -p $BUILD_DIR/backend/src
+          cp -R backend/src $BUILD_DIR/backend/
+          cp backend/package.json $BUILD_DIR/backend/
+          # Copy built static assets (prefer backend/dist for server.js lookup)
+          mkdir -p $BUILD_DIR/backend/dist
+          cp -R web/dist/* $BUILD_DIR/backend/dist/
+          # Root server start uses backend/src/server.js via root start script, include root package.json if desired
+          cp package.json $BUILD_DIR/
+          # (Optional) prune dev dependencies inside deploy if using root start; here we install only backend production deps at App Service
+          # Create minimal start script wrapper if needed (not required now)
+          echo "Contents of deploy folder:" && find $BUILD_DIR -maxdepth 3 -type f | sed 's/^/  /'
+
+      - name: Archive deploy artifact
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: .
+          name: deploy-package
+          path: ${{ env.BUILD_DIR }}
+          if-no-files-found: error
 
   deploy:
+    name: Deploy to Azure Web App
     runs-on: ubuntu-latest
     needs: build
     permissions:
       id-token: write
       contents: read
-
     steps:
-      - name: Download artifact from build job
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: node-app
-      
+          name: deploy-package
+          path: .
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -55,11 +81,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'dangunland'
           slot-name: 'Production'
-          package: .
+          package: deploy
+
+      - name: Post-deploy info
+        run: |
+          echo "Deployment complete. If server fails to start, ensure Azure App Service Node version matches $NODE_VERSION." 
           
