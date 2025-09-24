@@ -74,8 +74,21 @@ The app is **READY** for Windows Store submission with:
 - **All Required Assets**: ✅ Complete (see `assets/` directory)
 
 ### Store Package Creation
+
+**⚠️ Platform Requirement**: Windows Store (.appx) packages can only be built on Windows 10+ systems.
+
+**Local Build (Windows only):**
 ```bash
 npm run dist:win-store
+```
+
+**Cross-Platform Build (GitHub Actions):**
+Use the "Windows Store Build" workflow in GitHub Actions for building from macOS/Linux.
+
+**Configuration Validation:**
+```bash
+npm run validate-config    # Comprehensive validation
+npm run check-store-ready  # Quick readiness check
 ```
 
 This creates an `.appx` file in the `release` directory ready for Store submission.

@@ -1,0 +1,58 @@
+name: Windows Store Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: false
+        default: '1.0.0'
+  push:
+    branches: [ main ]
+    paths:
+      - 'electron/**'
+      - 'shared-ui/**'
+      - '.github/workflows/windows-store-build.yml'
+
+jobs:
+  build-windows-store:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm run install-all
+      
+    - name: Build shared UI
+      run: npm --workspace shared-ui run build
+      
+    - name: Build electron renderer
+      run: npm --workspace electron run build:renderer
+      
+    - name: Check Windows Store readiness
+      run: npm --workspace electron run check-store-ready
+      
+    - name: Build Windows Store package
+      run: npm --workspace electron run dist:win-store
+      
+    - name: Upload Windows Store artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-store-package
+        path: |
+          electron/release/*.appx
+          electron/release/*.exe
+        retention-days: 30
+        
+    - name: List build artifacts
+      run: |
+        Write-Host "Build artifacts created:"
+        Get-ChildItem -Recurse electron/release/ | Format-Table Name, Length, LastWriteTime

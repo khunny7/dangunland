@@ -33,9 +33,16 @@ All required Windows Store assets have been created and are located in the `asse
 
 ## Building the Windows Store Package
 
+**⚠️ IMPORTANT: Windows Store (.appx) packages can only be built on Windows 10 or Windows Server 2012 R2 (version 6.3+). This is a limitation of the Microsoft AppX packaging tools.**
+
+### Prerequisites for Windows Store Build
+- Windows 10 or Windows Server 2012 R2 (version 6.3+)
+- Node.js 18+
+- Visual Studio Build Tools or Visual Studio Community (for Windows SDK)
+
 ### Option 1: Using Electron Builder (Recommended)
 ```bash
-# Install dependencies
+# Install dependencies (run from project root)
 npm run install-all
 
 # Build the shared UI library
@@ -44,11 +51,26 @@ npm --workspace shared-ui run build
 # Build the electron renderer
 npm --workspace electron run build:renderer
 
-# Create Windows Store package (.appx)
+# Create Windows Store package (.appx) - REQUIRES WINDOWS
 npm --workspace electron run dist:win-store
 ```
 
-### Option 2: Manual APPX Creation
+### Verification Before Building
+Check if your configuration is ready:
+```bash
+npm --workspace electron run check-store-ready
+```
+
+### Option 2: Using GitHub Actions (Recommended for Cross-Platform Development)
+If you're developing on macOS or Linux, use the provided GitHub Actions workflow:
+
+1. Push your changes to the main branch or manually trigger the workflow
+2. Go to GitHub Actions → "Windows Store Build" workflow
+3. The workflow will build on Windows runners and create the .appx package
+4. Download the artifacts from the completed workflow run
+
+### Option 3: Manual APPX Creation
+If the automated build fails, you can create the APPX manually:
 If the automated build fails, you can create the APPX manually:
 
 1. Build the electron app:
@@ -198,10 +220,20 @@ For trusted installation outside the Store:
 ## Troubleshooting
 
 ### Common Issues
-1. **Package validation errors**: Check manifest syntax and asset references
-2. **Icon not displaying**: Ensure all PNG files are properly formatted
-3. **App crashes on startup**: Verify Electron build includes all dependencies
-4. **Korean text issues**: Confirm EUC-KR encoding is working correctly
+1. **"AppX is supported only on Windows 10 or Windows Server 2012 R2" Error**: 
+   - This occurs when trying to build AppX packages on non-Windows systems (Linux, macOS)
+   - Solution: Build the Windows Store package on a Windows machine
+   - Alternative: Use GitHub Actions with Windows runners or Windows VM
+
+2. **Package validation errors**: Check manifest syntax and asset references
+3. **Icon not displaying**: Ensure all PNG files are properly formatted
+4. **App crashes on startup**: Verify Electron build includes all dependencies
+5. **Korean text issues**: Confirm EUC-KR encoding is working correctly
+
+### Platform Requirements
+- **Windows Store (.appx) builds**: Requires Windows 10+ or Windows Server 2012 R2+
+- **Regular Windows (.exe) builds**: Can be cross-compiled from Linux/macOS
+- **Development**: Can be done on any platform (Windows, Linux, macOS)
 
 ### Support Resources
 - [Microsoft Store Developer Documentation](https://docs.microsoft.com/en-us/windows/uwp/publish/)
