@@ -1716,6 +1716,14 @@ body {
   letter-spacing: 1px;
 }
 
+.macro-info {
+  font-size: 8px;
+  color: #888;
+  font-weight: normal;
+  text-transform: lowercase;
+  letter-spacing: 0.3px;
+}
+
 @media (max-width: 900px) {
   .macro-board { display: none; }
 }

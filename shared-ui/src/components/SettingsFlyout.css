@@ -227,6 +227,57 @@
   color: #9ca3af;
 }
 
+.form-textarea {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+}
+
+.form-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.commands-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.form-label {
+  font-weight: bold;
+  color: #374151;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.help-text {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.macro-info {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
 .form-select {
   background: #ffffff;
   border: 1px solid #d1d5db;

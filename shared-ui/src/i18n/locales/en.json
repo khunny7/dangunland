@@ -48,7 +48,8 @@
     "empty": "No connection events yet."
   },
   "macroBoard": {
-    "title": "Macros"
+    "title": "Macros",
+    "commands": "cmds"
   },
   "macros": {
     "title": "Macro Management",
@@ -60,12 +61,15 @@
     "disable": "Disable",
     "key": "Key",
     "command": "Command",
+    "commands": "Commands",
     "desc": "Description",
     "delay": "Delay (ms)",
     "save": "Save",
     "cancel": "Cancel",
     "keyPlaceholder": "e.g. F1, Ctrl+1, Alt+A",
     "commandPlaceholder": "Enter command to execute",
+    "commandsPlaceholder": "Enter commands (one per line)\nExample:\nlook\nsay Hello everyone!\nwho",
+    "commandsHelp": "Enter one command per line. Each command will be sent separately with a small delay.",
     "descriptionPlaceholder": "Macro description (optional)",
     "noMacros": "No macros yet. Add one to get started!",
     "enabled": "Enabled",
@@ -83,12 +87,15 @@
     "disable": "Disable",
     "pattern": "Pattern",
     "command": "Command",
+    "commands": "Commands to Execute",
     "desc": "Description",
     "delay": "Delay (ms)",
     "save": "Save",
     "cancel": "Cancel",
     "patternPlaceholder": "Text pattern to detect",
     "commandPlaceholder": "Enter command to execute",
+    "commandsPlaceholder": "Enter commands (one per line)\nExample:\ndrink water\nrest\nsay I'm resting",
+    "commandsHelp": "Enter one command per line. These will be executed when the trigger pattern matches incoming text.",
     "descriptionPlaceholder": "Trigger description (optional)",
     "noTriggers": "No triggers yet. Add one to get started!",
     "enabled": "Enabled",

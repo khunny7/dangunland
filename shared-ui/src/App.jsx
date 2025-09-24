@@ -101,8 +101,9 @@ function App({ communicationAdapter }) {
     } else {
       // Default macros
       const defaultMacros = [
-        { id: 1, name: 'Look Around', type: 'alias', trigger: 'l', command: 'look', enabled: true },
-        { id: 2, name: 'Quick Attack', type: 'function', trigger: 'F1', command: 'kill target', enabled: true }
+        { id: 1, name: 'Look Around', type: 'alias', trigger: 'l', commands: 'look', enabled: true },
+        { id: 2, name: 'Quick Attack', type: 'function', trigger: 'F1', commands: 'kill target\nlook', enabled: true },
+        { id: 3, name: 'Combat Combo', type: 'function', trigger: 'F2', commands: 'cast magic missile\ncast magic missile\ndrink healing potion', enabled: true }
       ];
       setMacros(defaultMacros);
     }
@@ -113,8 +114,9 @@ function App({ communicationAdapter }) {
     } else {
       // Default triggers
       const defaultTriggers = [
-        { id: 1, name: 'Health Warning', type: 'contains', pattern: 'hp', command: 'drink healing', delay: 1000, enabled: true },
-        { id: 2, name: 'Combat Alert', type: 'contains', pattern: 'attacks you', command: 'say Help! I am under attack!', delay: 500, enabled: true }
+        { id: 1, name: 'Health Warning', type: 'contains', pattern: 'hp', commands: 'drink healing\nrest', delay: 1000, enabled: true },
+        { id: 2, name: 'Combat Alert', type: 'contains', pattern: 'attacks you', commands: 'say Help! I am under attack!\nflee', delay: 500, enabled: true },
+        { id: 3, name: 'Auto Rest', type: 'contains', pattern: 'You are tired', commands: 'sit\nrest\nsay Taking a break', delay: 1000, enabled: true }
       ];
       setTriggers(defaultTriggers);
     }
@@ -248,6 +250,26 @@ function App({ communicationAdapter }) {
     return () => stopHeartbeat();
   }, [stopHeartbeat]);
 
+  // Execute trigger commands (supports multiple commands)
+  const executeTrigger = useCallback((trigger) => {
+    if (!communicationAdapter || !communicationAdapter.isConnected()) return;
+    
+    const commands = (trigger.commands || trigger.command || '').split('\n').filter(cmd => cmd.trim());
+    
+    commands.forEach((command, index) => {
+      const trimmedCommand = command.trim();
+      if (trimmedCommand) {
+        // Add delay between commands (base delay + index delay)
+        const totalDelay = (trigger.delay || 0) + (index * 150);
+        setTimeout(() => {
+          const payload = trimmedCommand.replace(/[\r\n]+$/g, '') + '\r\n';
+          communicationAdapter.sendInput(payload);
+          console.log(`Trigger fired: "${trigger.pattern}" -> "${trimmedCommand}"`);
+        }, totalDelay);
+      }
+    });
+  }, [communicationAdapter]);
+
   // Trigger processing
   const processTriggers = useCallback((text) => {
     for (const trigger of triggers) {
@@ -265,15 +287,11 @@ function App({ communicationAdapter }) {
         }
       }
 
-      if (matches && communicationAdapter && communicationAdapter.isConnected()) {
-        setTimeout(() => {
-          const payload = trigger.command.replace(/[\r\n]+$/g, '') + '\r\n';
-          communicationAdapter.sendInput(payload);
-          console.log(`Trigger fired: "${trigger.pattern}" -> "${trigger.command}"`);
-        }, trigger.delay || 0);
+      if (matches) {
+        executeTrigger(trigger);
       }
     }
-  }, [triggers, communicationAdapter]);
+  }, [triggers, executeTrigger]);
 
   // Terminal output helper
   const writeToTerminal = useCallback((text) => {
@@ -342,16 +360,28 @@ function App({ communicationAdapter }) {
 
   // Macro expansion helper
   const expandMacros = useCallback((input) => {
-    let expanded = input;
     // Check for text alias macros
     for (const macro of macros) {
-      if (macro.type === 'alias' && macro.trigger === expanded.trim()) {
-        expanded = macro.command;
-        break;
+      if (macro.type === 'alias' && macro.trigger === input.trim()) {
+        // Execute all commands for this macro inline
+        if (communicationAdapter && communicationAdapter.isConnected()) {
+          const commands = (macro.commands || macro.command || '').split('\n').filter(cmd => cmd.trim());
+          commands.forEach((command, index) => {
+            const trimmedCommand = command.trim();
+            if (trimmedCommand) {
+              setTimeout(() => {
+                const payload = trimmedCommand.replace(/[\r\n]+$/g, '') + '\r\n';
+                communicationAdapter.sendInput(payload);
+                console.log(`Macro command executed: ${trimmedCommand}`);
+              }, index * 100);
+            }
+          });
+        }
+        return ''; // Return empty string to prevent sending the original input
       }
     }
-    return expanded;
-  }, [macros]);
+    return input; // Return original input if no macro matches
+  }, [macros, communicationAdapter]);
 
   const sendLine = useCallback(() => {
     const raw = inputValue;
@@ -384,7 +414,7 @@ function App({ communicationAdapter }) {
     }
     // refocus input
     setTimeout(() => inputRef.current?.focus(), 0);
-  }, [inputValue, expandMacros, communicationAdapter]);
+  }, [inputValue, macros, communicationAdapter]);
 
   // Execute a macro command directly (from MacroBoard click)
   const executeMacroCommand = useCallback((command) => {
@@ -425,6 +455,25 @@ function App({ communicationAdapter }) {
     }
   };
 
+  // Execute macro commands (supports multiple commands)
+  const executeMacroCommands = useCallback((macro) => {
+    if (!communicationAdapter || !communicationAdapter.isConnected()) return;
+    
+    const commands = (macro.commands || macro.command || '').split('\n').filter(cmd => cmd.trim());
+    
+    commands.forEach((command, index) => {
+      const trimmedCommand = command.trim();
+      if (trimmedCommand) {
+        // Add small delay between commands to avoid overwhelming the server
+        setTimeout(() => {
+          const payload = trimmedCommand.replace(/[\r\n]+$/g, '') + '\r\n';
+          communicationAdapter.sendInput(payload);
+          console.log(`Macro command executed: ${trimmedCommand}`);
+        }, index * 100); // 100ms delay between each command
+      }
+    });
+  }, [communicationAdapter]);
+
   // Function key macro handler
   const handleFunctionKey = useCallback((e) => {
     // Check for function key macros (F1-F12)
@@ -433,8 +482,21 @@ function App({ communicationAdapter }) {
       const macro = macros.find(m => m.type === 'function' && m.trigger === functionKey);
       if (macro && communicationAdapter && communicationAdapter.isConnected()) {
         e.preventDefault();
-        communicationAdapter.sendInput(macro.command.replace(/[\r\n]+$/g, '') + '\r\n');
-        console.log(`Function key macro fired: ${functionKey} -> ${macro.command}`);
+        
+        // Execute macro commands inline to avoid circular dependency
+        const commands = (macro.commands || macro.command || '').split('\n').filter(cmd => cmd.trim());
+        commands.forEach((command, index) => {
+          const trimmedCommand = command.trim();
+          if (trimmedCommand) {
+            setTimeout(() => {
+              const payload = trimmedCommand.replace(/[\r\n]+$/g, '') + '\r\n';
+              communicationAdapter.sendInput(payload);
+              console.log(`Macro command executed: ${trimmedCommand}`);
+            }, index * 100);
+          }
+        });
+        
+        console.log(`Function key macro fired: ${functionKey}`);
         return true;
       }
     }

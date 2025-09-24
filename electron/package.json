@@ -36,6 +36,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.0.0",
     "electron": "^32.0.0",
     "electron-builder": "^26.0.12",
     "react": "^19.1.1",
@@ -54,7 +55,7 @@
       "src/**/*",
       "dist/**/*",
       "!node_modules/**/test/**/*",
-      "!node_modules/**/tests/**/*", 
+      "!node_modules/**/tests/**/*",
       "!node_modules/**/*.md",
       "!node_modules/**/.npmignore",
       "!node_modules/**/LICENSE*",

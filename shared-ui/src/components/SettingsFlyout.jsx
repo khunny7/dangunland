@@ -185,12 +185,12 @@ const SettingsFlyout = ({
 // Macro Manager Component
 function MacroManager({ macros, onAdd, onEdit, onDelete }) {
   const { t } = useTranslation();
-  const [newMacro, setNewMacro] = useState({ name: '', type: 'alias', trigger: '', command: '' });
+  const [newMacro, setNewMacro] = useState({ name: '', type: 'alias', trigger: '', commands: '' });
   const [editingId, setEditingId] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newMacro.name || !newMacro.trigger || !newMacro.command) return;
+    if (!newMacro.name || !newMacro.trigger || !newMacro.commands) return;
     
     if (editingId !== null) {
       onEdit(editingId, newMacro);
@@ -198,16 +198,21 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
     } else {
       onAdd(newMacro);
     }
-    setNewMacro({ name: '', type: 'alias', trigger: '', command: '' });
+    setNewMacro({ name: '', type: 'alias', trigger: '', commands: '' });
   };
 
   const startEdit = (macro) => {
-    setNewMacro({ name: macro.name, type: macro.type, trigger: macro.trigger, command: macro.command });
+    setNewMacro({ 
+      name: macro.name, 
+      type: macro.type, 
+      trigger: macro.trigger, 
+      commands: macro.commands || macro.command || '' 
+    });
     setEditingId(macro.id);
   };
 
   const cancelEdit = () => {
-    setNewMacro({ name: '', type: 'alias', trigger: '', command: '' });
+    setNewMacro({ name: '', type: 'alias', trigger: '', commands: '' });
     setEditingId(null);
   };
 
@@ -260,14 +265,20 @@ function MacroManager({ macros, onAdd, onEdit, onDelete }) {
               ))}
             </select>
           )}
-          <input
-            type="text"
-            placeholder={t('macros.commandPlaceholder')}
-            value={newMacro.command}
-            onChange={e => setNewMacro(prev => ({ ...prev, command: e.target.value }))}
-            className="form-input"
-            style={{ flex: 2 }}
-          />
+        </div>
+
+        <div className="form-row">
+          <div className="commands-input">
+            <label className="form-label">{t('macros.commands')}</label>
+            <textarea
+              placeholder={t('macros.commandsPlaceholder')}
+              value={newMacro.commands}
+              onChange={e => setNewMacro(prev => ({ ...prev, commands: e.target.value }))}
+              className="form-textarea"
+              rows="4"
+            />
+            <small className="help-text">{t('macros.commandsHelp')}</small>
+          </div>
         </div>
 
         <div className="form-buttons">
@@ -317,14 +328,14 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
     name: '', 
     type: 'contains', 
     pattern: '', 
-    command: '', 
+    commands: '', 
     delay: 0 
   });
   const [editingId, setEditingId] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newTrigger.name || !newTrigger.pattern || !newTrigger.command) return;
+    if (!newTrigger.name || !newTrigger.pattern || !newTrigger.commands) return;
     
     if (editingId !== null) {
       onEdit(editingId, newTrigger);
@@ -332,7 +343,7 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
     } else {
       onAdd(newTrigger);
     }
-    setNewTrigger({ name: '', type: 'contains', pattern: '', command: '', delay: 0 });
+    setNewTrigger({ name: '', type: 'contains', pattern: '', commands: '', delay: 0 });
   };
 
   const startEdit = (trigger) => {
@@ -340,14 +351,14 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
       name: trigger.name, 
       type: trigger.type, 
       pattern: trigger.pattern, 
-      command: trigger.command, 
+      commands: trigger.commands || trigger.command || '', 
       delay: trigger.delay || 0 
     });
     setEditingId(trigger.id);
   };
 
   const cancelEdit = () => {
-    setNewTrigger({ name: '', type: 'contains', pattern: '', command: '', delay: 0 });
+    setNewTrigger({ name: '', type: 'contains', pattern: '', commands: '', delay: 0 });
     setEditingId(null);
   };
 
@@ -387,16 +398,21 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
             value={newTrigger.pattern}
             onChange={e => setNewTrigger(prev => ({ ...prev, pattern: e.target.value }))}
             className="form-input"
-            style={{ flex: 2 }}
           />
-          <input
-            type="text"
-            placeholder={t('triggers.commandPlaceholder')}
-            value={newTrigger.command}
-            onChange={e => setNewTrigger(prev => ({ ...prev, command: e.target.value }))}
-            className="form-input"
-            style={{ flex: 2 }}
-          />
+        </div>
+
+        <div className="form-row">
+          <div className="commands-input">
+            <label className="form-label">{t('triggers.commands')}</label>
+            <textarea
+              placeholder={t('triggers.commandsPlaceholder')}
+              value={newTrigger.commands}
+              onChange={e => setNewTrigger(prev => ({ ...prev, commands: e.target.value }))}
+              className="form-textarea"
+              rows="4"
+            />
+            <small className="help-text">{t('triggers.commandsHelp')}</small>
+          </div>
         </div>
 
         <div className="form-row">
