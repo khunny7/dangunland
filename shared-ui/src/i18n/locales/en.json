@@ -21,6 +21,7 @@
     "general": "General",
     "macros": "Macros",
     "triggers": "Triggers",
+    "servers": "Servers",
     "logs": "Logs",
     "language": "Language",
     "theme": "Theme",
@@ -103,6 +104,23 @@
     "containsText": "Contains Text",
     "exactMatch": "Exact Match",
     "regularExpression": "Regular Expression"
+  },
+  "servers": {
+    "title": "Server Management",
+    "description": "Manage your MUD server connections.",
+    "add": "Add Server",
+    "edit": "Edit",
+    "update": "Update Server",
+    "delete": "Delete",
+    "name": "Server Name",
+    "host": "Host/IP",
+    "port": "Port",
+    "descLabel": "Description",
+    "namePlaceholder": "Enter server name",
+    "hostPlaceholder": "Enter hostname or IP",
+    "descriptionPlaceholder": "Server description (optional)",
+    "noServers": "No servers configured",
+    "selectServer": "Please select a server to connect"
   },
   "terminal": {
     "placeholder": "Enter command...",

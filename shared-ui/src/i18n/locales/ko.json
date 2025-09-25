@@ -21,6 +21,7 @@
     "general": "일반",
     "macros": "매크로",
     "triggers": "트리거",
+    "servers": "서버",
     "logs": "로그",
     "language": "언어",
     "theme": "테마",
@@ -103,6 +104,23 @@
     "containsText": "텍스트 포함",
     "exactMatch": "정확히 일치",
     "regularExpression": "정규 표현식"
+  },
+  "servers": {
+    "title": "서버 관리",
+    "description": "MUD 서버 연결을 관리합니다.",
+    "add": "서버 추가",
+    "edit": "편집",
+    "update": "서버 수정",
+    "delete": "삭제",
+    "name": "서버 이름",
+    "host": "호스트/IP",
+    "port": "포트",
+    "descLabel": "설명",
+    "namePlaceholder": "서버 이름 입력",
+    "hostPlaceholder": "호스트 이름 또는 IP 입력",
+    "descriptionPlaceholder": "서버 설명 (선택사항)",
+    "noServers": "설정된 서버가 없습니다",
+    "selectServer": "연결할 서버를 선택하세요"
   },
   "terminal": {
     "placeholder": "명령어를 입력하세요...",

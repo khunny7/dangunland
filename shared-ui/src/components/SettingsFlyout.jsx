@@ -23,6 +23,11 @@ const SettingsFlyout = ({
   editTrigger,
   deleteTrigger,
   toggleTrigger,
+  // Servers
+  servers,
+  addServer,
+  editServer,
+  deleteServer,
   // Logs
   logs = [],
   onClearLogs,
@@ -71,6 +76,13 @@ const SettingsFlyout = ({
           >
             <span className="tab-icon">🎯</span>
             {t('settings.triggers')} ({triggers.filter(t => t.enabled).length}/{triggers.length})
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'servers' ? 'active' : ''}`}
+            onClick={() => setActiveTab('servers')}
+          >
+            <span className="tab-icon">🌐</span>
+            {t('settings.servers')} ({servers.length})
           </button>
           <button 
             className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
@@ -153,6 +165,16 @@ const SettingsFlyout = ({
               onEdit={editTrigger}
               onDelete={deleteTrigger}
               onToggle={toggleTrigger}
+            />
+          )}
+
+          {/* Servers Tab */}
+          {activeTab === 'servers' && (
+            <ServerManager 
+              servers={servers}
+              onAdd={addServer}
+              onEdit={editServer}
+              onDelete={deleteServer}
             />
           )}
 
@@ -473,6 +495,134 @@ function TriggerManager({ triggers, onAdd, onEdit, onDelete, onToggle }) {
         ))}
         {triggers.length === 0 && (
           <div className="empty-state">{t('triggers.noTriggers')}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Server Manager Component
+function ServerManager({ servers, onAdd, onEdit, onDelete }) {
+  const { t } = useTranslation();
+  const [newServer, setNewServer] = useState({ 
+    name: '', 
+    host: '', 
+    port: 5002, 
+    description: '' 
+  });
+  const [editingId, setEditingId] = useState(null);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!newServer.name || !newServer.host || !newServer.port) return;
+    
+    if (editingId !== null) {
+      onEdit(editingId, newServer);
+      setEditingId(null);
+    } else {
+      onAdd(newServer);
+    }
+    setNewServer({ name: '', host: '', port: 5002, description: '' });
+  };
+
+  const startEdit = (server) => {
+    setNewServer({ 
+      name: server.name, 
+      host: server.host, 
+      port: server.port, 
+      description: server.description || '' 
+    });
+    setEditingId(server.id);
+  };
+
+  const cancelEdit = () => {
+    setNewServer({ name: '', host: '', port: 5002, description: '' });
+    setEditingId(null);
+  };
+
+  return (
+    <div className="manager-container">
+      <div className="manager-header">
+        <h3>{t('servers.title')}</h3>
+        <div className="help-text">
+          {t('servers.description')}
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="server-form">
+        <div className="form-row">
+          <input
+            type="text"
+            placeholder={t('servers.namePlaceholder')}
+            value={newServer.name}
+            onChange={e => setNewServer(prev => ({ ...prev, name: e.target.value }))}
+            className="form-input"
+          />
+          <input
+            type="text"
+            placeholder={t('servers.hostPlaceholder')}
+            value={newServer.host}
+            onChange={e => setNewServer(prev => ({ ...prev, host: e.target.value }))}
+            className="form-input"
+          />
+          <input
+            type="number"
+            placeholder="Port"
+            min="1"
+            max="65535"
+            value={newServer.port}
+            onChange={e => setNewServer(prev => ({ ...prev, port: parseInt(e.target.value) || 5002 }))}
+            className="form-input"
+            style={{ maxWidth: '100px' }}
+          />
+        </div>
+
+        <div className="form-row">
+          <input
+            type="text"
+            placeholder={t('servers.descriptionPlaceholder')}
+            value={newServer.description}
+            onChange={e => setNewServer(prev => ({ ...prev, description: e.target.value }))}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-buttons">
+          <button type="submit" className="retro-button">
+            {editingId !== null ? t('servers.update') : t('servers.add')}
+          </button>
+          {editingId !== null && (
+            <button type="button" onClick={cancelEdit} className="retro-button">
+              {t('common.cancel')}
+            </button>
+          )}
+        </div>
+      </form>
+
+      <div className="items-list">
+        {servers.map(server => (
+          <div key={server.id} className="list-item server-item">
+            <div className="item-content">
+              <div className="item-name">{server.name}</div>
+              <div className="item-details">
+                <span className="server-address">{server.host}:{server.port}</span>
+                {server.description && (
+                  <span className="server-description">{server.description}</span>
+                )}
+              </div>
+            </div>
+            <div className="item-actions">
+              <button onClick={() => startEdit(server)} className="retro-button small">
+                {t('common.edit')}
+              </button>
+              <button onClick={() => onDelete(server.id)} className="retro-button small danger">
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        ))}
+        {servers.length === 0 && (
+          <div className="empty-state">{t('servers.noServers')}</div>
         )}
       </div>
     </div>

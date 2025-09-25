@@ -24,9 +24,12 @@ function App({ communicationAdapter }) {
   const termRef = useRef(null);
   const xtermRef = useRef(null);
   const [status, setStatus] = useState('disconnected');
-  const [selectedPort, setSelectedPort] = useState('5002');
-  const [activePort, setActivePort] = useState(null);
+  const [selectedServer, setSelectedServer] = useState(null);
+  const [activeServer, setActiveServer] = useState(null);
   const [inputValue, setInputValue] = useState('');
+
+  // Server management
+  const [servers, setServers] = useState([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Settings flyout tab state
   const [activeTab, setActiveTab] = useState('general');
@@ -76,6 +79,29 @@ function App({ communicationAdapter }) {
     setTriggers(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
   }, []);
 
+  // Server management functions
+  const addServer = useCallback((server) => {
+    const nextId = Math.max(0, ...servers.map(s => s.id)) + 1;
+    const newServer = { id: nextId, ...server };
+    setServers(prev => [...prev, newServer]);
+    return newServer;
+  }, [servers]);
+
+  const editServer = useCallback((id, updated) => {
+    setServers(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+  }, []);
+
+  const deleteServer = useCallback((id) => {
+    setServers(prev => {
+      const filtered = prev.filter(s => s.id !== id);
+      // If we're deleting the selected server, select the first available
+      if (selectedServer && selectedServer.id === id) {
+        setSelectedServer(filtered.length > 0 ? filtered[0] : null);
+      }
+      return filtered;
+    });
+  }, [selectedServer]);
+
   // Refs for history and timers
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
@@ -120,6 +146,49 @@ function App({ communicationAdapter }) {
       ];
       setTriggers(defaultTriggers);
     }
+
+    // Initialize servers
+    const savedServers = localStorage.getItem('mudClientServers');
+    let serversToUse = [];
+    
+    if (savedServers) {
+      try {
+        const parsedServers = JSON.parse(savedServers);
+        if (Array.isArray(parsedServers) && parsedServers.length > 0) {
+          serversToUse = parsedServers;
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved servers, using defaults:', e);
+      }
+    }
+    
+    // If no valid saved servers, create defaults
+    if (serversToUse.length === 0) {
+      serversToUse = [
+        { id: 1, name: 'DangunLand Server 1', host: 'dangunland.piano8283.com', port: 5002, description: 'Main game server' },
+        { id: 2, name: 'DangunLand Server 2', host: 'dangunland.piano8283.com', port: 5003, description: 'Alternative server' }
+      ];
+      console.log('Creating default servers:', serversToUse);
+    }
+    
+    setServers(serversToUse);
+    
+    // Set default selected server
+    const savedSelectedServer = localStorage.getItem('mudClientSelectedServer');
+    let selectedServerToUse = null;
+    
+    if (savedSelectedServer) {
+      const selectedId = parseInt(savedSelectedServer, 10);
+      selectedServerToUse = serversToUse.find(s => s.id === selectedId);
+    }
+    
+    // Fallback to first server if no valid selection
+    if (!selectedServerToUse && serversToUse.length > 0) {
+      selectedServerToUse = serversToUse[0];
+    }
+    
+    setSelectedServer(selectedServerToUse);
+    console.log('Initialized servers:', serversToUse.length, 'Selected:', selectedServerToUse?.name);
   }, []);
 
   // Save settings to localStorage when they change
@@ -138,6 +207,16 @@ function App({ communicationAdapter }) {
   useEffect(() => {
     localStorage.setItem('mudClientTriggers', JSON.stringify(triggers));
   }, [triggers]);
+
+  useEffect(() => {
+    localStorage.setItem('mudClientServers', JSON.stringify(servers));
+  }, [servers]);
+
+  useEffect(() => {
+    if (selectedServer) {
+      localStorage.setItem('mudClientSelectedServer', selectedServer.id.toString());
+    }
+  }, [selectedServer]);
 
   // Terminal initialization helper
   const initializeTerminalContent = useCallback((term) => {
@@ -333,18 +412,17 @@ function App({ communicationAdapter }) {
 
     communicationAdapter.onStatusChange = (newStatus, port) => {
       setStatus(newStatus);
-      if (newStatus === 'connected' && port) {
-        setActivePort(port);
-        pushEvent(`Connected to port ${port}`);
+      if (newStatus === 'connected' && port && selectedServer) {
+        setActiveServer(selectedServer);
+        pushEvent(`Connected to ${selectedServer.name} (${selectedServer.host}:${selectedServer.port})`);
         startHeartbeat();
       } else if (newStatus === 'disconnected') {
-        setActivePort(null);
+        setActiveServer(null);
         pushEvent('Disconnected');
         stopHeartbeat();
-      } else if (newStatus === 'connecting') {
-        pushEvent(`Connecting to port ${port}...`);
-        // Clear any previous activePort when starting connection
-        setActivePort(null);
+      } else if (newStatus === 'connecting' && selectedServer) {
+        pushEvent(`Connecting to ${selectedServer.name} (${selectedServer.host}:${selectedServer.port})...`);
+        setActiveServer(null);
       }
     };
 
@@ -514,22 +592,23 @@ function App({ communicationAdapter }) {
   }, [handleFunctionKey]);
 
   const toggleConnection = useCallback(() => {
-    if (!communicationAdapter) return;
+    if (!communicationAdapter || !selectedServer) return;
 
     if (communicationAdapter.isConnected()) {
       communicationAdapter.disconnect();
     } else {
-      communicationAdapter.connect(selectedPort);
+      // Pass the port for backward compatibility, but we could extend this to pass full server info
+      communicationAdapter.connect(selectedServer.port.toString());
     }
-  }, [communicationAdapter, selectedPort]);
+  }, [communicationAdapter, selectedServer]);
 
   // Status text helper
   const getStatusText = (status) => {
-    if (status === 'connected' && activePort) {
-      return `${t('app.connected')} (port ${activePort})`;
+    if (status === 'connected' && activeServer) {
+      return `${t('app.connected')} (${activeServer.name})`;
     }
-    if (status === 'connecting') {
-      return `${t('app.connecting')} (port ${selectedPort})...`;
+    if (status === 'connecting' && selectedServer) {
+      return `${t('app.connecting')} (${selectedServer.name})...`;
     }
     return t(`app.${status}`) || status;
   };
@@ -567,22 +646,34 @@ function App({ communicationAdapter }) {
             </div>
             
             <div className="status-section">
-              <span className={`status-light ${activePort ? 'connected' : ''}`}></span>
+              <span className={`status-light ${activeServer ? 'connected' : ''}`}></span>
               <span className="status-text">{getStatusText(status)}</span>
             </div>
             
-            <select 
-              className="retro-select" 
-              value={selectedPort} 
-              onChange={e => setSelectedPort(e.target.value)}
-            >
-              <option value="5002">Server 1 (5002)</option>
-              <option value="5003">Server 2 (5003)</option>
-            </select>
+            {status !== 'connected' && (
+              <select 
+                className="retro-select" 
+                value={selectedServer?.id || ''} 
+                onChange={e => {
+                  const serverId = parseInt(e.target.value);
+                  const server = servers.find(s => s.id === serverId);
+                  setSelectedServer(server || null);
+                }}
+              >
+                {servers.length === 0 && <option value="">{t('servers.noServers')}</option>}
+                {servers.map(server => (
+                  <option key={server.id} value={server.id}>
+                    {server.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <button 
               className={`retro-button ${status === 'connected' ? 'disconnect' : 'connect'}`} 
               onClick={toggleConnection}
+              disabled={!selectedServer}
+              title={!selectedServer ? t('servers.selectServer') : ''}
             >
               {status === 'connected' ? '🔌 ' + t('app.disconnect') : '🔌 ' + t('app.connect')}
             </button>
@@ -645,6 +736,10 @@ function App({ communicationAdapter }) {
           editTrigger={editTrigger}
           deleteTrigger={deleteTrigger}
           toggleTrigger={toggleTrigger}
+          servers={servers}
+          addServer={addServer}
+          editServer={editServer}
+          deleteServer={deleteServer}
           heartbeatEnabled={heartbeatEnabled}
           setHeartbeatEnabled={setHeartbeatEnabled}
           heartbeatInterval={heartbeatInterval}

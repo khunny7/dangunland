@@ -727,6 +727,45 @@
 .list-item { background: var(--retro-dark-beige); border: 2px solid var(--retro-border); }
 .list-item.enabled { border-left: 4px solid #2970bb; }
 
+/* Server Management Styles */
+.server-item .item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.server-address {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #2563eb;
+  font-size: 0.9em;
+}
+
+.server-description {
+  font-size: 0.85em;
+  color: #64748b;
+  font-style: italic;
+}
+
+.server-form .form-row:first-child input[type="number"] {
+  flex: 0 0 100px;
+}
+
+/* Button disabled state */
+.retro-button:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.retro-button:disabled:hover {
+  background-color: #e5e7eb;
+  transform: none;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
 /* Logs tab list styling alignment */
 
 @media (max-width: 900px) {
