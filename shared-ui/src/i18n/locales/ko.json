@@ -31,6 +31,12 @@
     "clearTerminal": "터미널 지우기",
     "saveSettings": "설정 저장",
     "resetSettings": "설정 초기화",
+    "terminalAppearance": "터미널 모양",
+    "colorTheme": "색상 테마",
+    "colorThemeDesc": "터미널의 색상 구성표를 선택하세요",
+    "themePreview": "미리보기:",
+    "sampleCommand": "connect dangunland.iptime.org",
+    "sampleOutput": "서버에 성공적으로 연결되었습니다!",
     "connectionBehavior": "연결 및 동작",
     "autoHeartbeat": "접속 유지",
     "preventTimeout": "유휴 상태에서 연결 시간 초과 방지",
@@ -40,7 +46,8 @@
     "tip1": "기능키 매크로는 F1-F12 키를 사용하세요",
     "tip2": "트리거는 서버 메시지에 자동으로 응답할 수 있습니다",
     "tip3": "위/아래 화살표로 명령어 기록을 탐색하세요",
-    "tip4": "하트비트는 유휴 연결 해제를 방지합니다"
+    "tip4": "하트비트는 유휴 연결 해제를 방지합니다",
+    "tip5": "/colortest를 입력하여 ANSI 색상 지원을 테스트하세요"
   },
   "logs": {
     "title": "연결 로그",

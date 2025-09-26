@@ -12,16 +12,24 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'xterm'],
       output: {
         globals: {
           react: 'React',
-          'react-dom': 'ReactDOM'
+          'react-dom': 'ReactDOM',
+          'xterm': 'Terminal'
         }
       }
     },
     cssCodeSplit: false,
     outDir: 'dist',
     emptyOutDir: true
+  },
+  css: {
+    preprocessorOptions: {
+      css: {
+        charset: false
+      }
+    }
   }
 })

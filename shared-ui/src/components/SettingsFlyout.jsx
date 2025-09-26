@@ -1,39 +1,39 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAppContext } from '../contexts/AppContext';
 import './SettingsFlyout.css';
 
-const SettingsFlyout = ({ 
-  isOpen, 
-  onClose, 
-  activeTab,
-  setActiveTab,
-  // General
-  heartbeatEnabled,
-  setHeartbeatEnabled,
-  heartbeatInterval,
-  setHeartbeatInterval,
-  // Macros
-  macros,
-  addMacro,
-  editMacro,
-  deleteMacro,
-  // Triggers
-  triggers,
-  addTrigger,
-  editTrigger,
-  deleteTrigger,
-  toggleTrigger,
-  // Servers
-  servers,
-  addServer,
-  editServer,
-  deleteServer,
-  // Logs
-  logs = [],
-  onClearLogs,
-  onSaveLogs
-}) => {
+const SettingsFlyout = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
+  
+  // Get all needed state from context
+  const {
+    activeTab,
+    setActiveTab,
+    heartbeatEnabled,
+    setHeartbeatEnabled,
+    heartbeatInterval,
+    setHeartbeatInterval,
+    selectedTheme,
+    setSelectedTheme,
+    terminalThemes,
+    macros,
+    addMacro,
+    editMacro,
+    deleteMacro,
+    triggers,
+    addTrigger,
+    editTrigger,
+    deleteTrigger,
+    toggleTrigger,
+    servers,
+    addServer,
+    editServer,
+    deleteServer,
+    connEvents,
+    setConnEvents,
+    saveLog
+  } = useAppContext();
   
   if (!isOpen) return null;
 
@@ -96,6 +96,60 @@ const SettingsFlyout = ({
         {/* Content */}
         <div className="flyout-content">
           {/* General Settings Tab */}
+          {activeTab === 'general' && (
+            <div className="settings-section">
+              <h3 className="section-title">{t('settings.terminalAppearance')}</h3>
+              
+              <div className="setting-group">
+                <label className="setting-label">
+                  <span className="label-text">
+                    <strong>{t('settings.colorTheme')}</strong>
+                    <small>{t('settings.colorThemeDesc')}</small>
+                  </span>
+                  <select 
+                    value={selectedTheme || 'classic'} 
+                    onChange={e => {
+                      console.log('Theme change requested:', e.target.value);
+                      setSelectedTheme(e.target.value);
+                      console.log('Theme changed to:', e.target.value);
+                    }}
+                    className="form-select"
+                  >
+                    {Object.entries(terminalThemes).map(([key, theme]) => (
+                      <option key={key} value={key}>
+                        {theme.name} - {theme.description}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {/* Theme preview */}
+              <div className="theme-preview">
+                <div className="preview-label">{t('settings.themePreview')}</div>
+                <div 
+                  className="theme-preview-box"
+                  style={{
+                    backgroundColor: terminalThemes[selectedTheme]?.colors?.background || '#001100',
+                    color: terminalThemes[selectedTheme]?.colors?.foreground || '#00ff41',
+                    border: `2px solid ${terminalThemes[selectedTheme]?.colors?.cursor || '#00ff41'}`,
+                    padding: '8px',
+                    borderRadius: '4px',
+                    fontFamily: 'Courier New, monospace',
+                    fontSize: '12px',
+                    minHeight: '60px'
+                  }}
+                >
+                  <div>$ {t('settings.sampleCommand')}</div>
+                  <div style={{color: terminalThemes[selectedTheme]?.colors?.green || '#50fa7b'}}>
+                    {t('settings.sampleOutput')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Connection Settings Section */}
           {activeTab === 'general' && (
             <div className="settings-section">
               <h3 className="section-title">{t('settings.connectionBehavior')}</h3>
@@ -183,14 +237,14 @@ const SettingsFlyout = ({
             <div className="settings-section">
               <h3 className="section-title">{t('logs.title')}</h3>
               <div style={{display:'flex', gap:'8px', marginBottom:'12px'}}>
-                <button className="retro-button" onClick={onClearLogs}>{t('logs.clear')}</button>
-                <button className="retro-button" onClick={onSaveLogs}>{t('logs.save')}</button>
+                <button className="retro-button" onClick={() => setConnEvents([])}>{t('logs.clear')}</button>
+                <button className="retro-button" onClick={saveLog}>{t('logs.save')}</button>
               </div>
               <div style={{maxHeight:'300px', overflowY:'auto', border:'1px solid #e2e8f0', borderRadius:'4px', background:'#f8fafc'}}>
-                {logs.length === 0 && (
+                {connEvents.length === 0 && (
                   <div style={{padding:'12px', fontStyle:'italic', color:'#64748b'}}>{t('logs.empty')}</div>
                 )}
-                {logs.slice().reverse().map((e,i) => (
+                {connEvents.slice().reverse().map((e,i) => (
                   <div key={i} style={{padding:'8px 12px', borderBottom:'1px solid #e2e8f0', fontFamily:'Courier New, monospace', fontSize:'12px'}}>
                     <strong>[{e.ts}]</strong> {e.message}
                   </div>

@@ -191,6 +191,44 @@
   accent-color: #6366f1;
 }
 
+.form-select {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  width: 100%;
+  max-width: 350px;
+  margin-top: 8px;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+}
+
+/* Theme Preview */
+.theme-preview {
+  margin-top: 16px;
+}
+
+.preview-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.theme-preview-box {
+  font-family: 'Courier New', monospace;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Forms */
 .macro-form, .trigger-form {
   background: #f8fafc;

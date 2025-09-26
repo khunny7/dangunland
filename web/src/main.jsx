@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App, WebSocketCommunicationAdapter } from 'dangunland-shared-ui';
 import 'dangunland-shared-ui/dist/index.css';
+import 'xterm/css/xterm.css';
 
 // Create communication adapter for web
 const communicationAdapter = new WebSocketCommunicationAdapter();
