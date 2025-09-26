@@ -8,6 +8,7 @@ export class WebSocketCommunicationAdapter {
     this.onMessage = null;
     this.onStatusChange = null;
     this.reconnectTimer = null;
+    this.intentionalDisconnect = false; // Track if disconnect was user-initiated
   }
 
   getWebSocketHost() {
@@ -21,6 +22,10 @@ export class WebSocketCommunicationAdapter {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.close();
     }
+    
+    // Reset disconnect flag when starting a new connection
+    this.intentionalDisconnect = false;
+    
     const host = this.getWebSocketHost();
     // Use secure websocket when the page itself is loaded via https
     const isBrowser = typeof window !== 'undefined';
@@ -32,6 +37,7 @@ export class WebSocketCommunicationAdapter {
     }
     const wsUrl = `${protocol}://${finalHost}/ws`;
     
+    console.log('[WebSocketAdapter] Connecting to', wsUrl);
     this.onStatusChange?.('connecting', port);
     
   this.ws = new WebSocket(wsUrl);
@@ -57,11 +63,13 @@ export class WebSocketCommunicationAdapter {
             const data = JSON.parse(event.data);
             if (data.t === 'status') {
               if (data.data === 'disconnect') {
+                console.log('[WebSocketAdapter] Server sent disconnect message');
                 this.onStatusChange?.('disconnected');
               } else {
                 const statusParts = data.data.split(':');
                 const state = statusParts[0];
                 const port = statusParts[2];
+                console.log('[WebSocketAdapter] Server status change:', state, 'port:', port);
                 this.onStatusChange?.(state, port);
               }
             } else if (data.t === 'log') {
@@ -97,14 +105,19 @@ export class WebSocketCommunicationAdapter {
       }
     };
     
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
+      const reason = this.intentionalDisconnect ? 'Disconnected by user' : `Connection lost (code: ${event.code})`;
+      console.log('[WebSocketAdapter]', reason);
+      
+      // Reset the flag
+      this.intentionalDisconnect = false;
+      
       this.onStatusChange?.('disconnected');
-      // Only auto-reconnect if connection was successful first
-      // Removed auto-reconnect as it interferes with normal disconnect flow
+      // No auto-reconnect to avoid interfering with normal disconnect flow
     };
     
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('[WebSocketAdapter] WebSocket error:', error);
       this.onStatusChange?.('disconnected');
     };
   }
@@ -115,6 +128,8 @@ export class WebSocketCommunicationAdapter {
       this.reconnectTimer = null;
     }
     if (this.ws) {
+      console.log('[WebSocketAdapter] Initiating disconnect by user');
+      this.intentionalDisconnect = true;
       this.ws.close();
       this.ws = null;
     }

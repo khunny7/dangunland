@@ -41,3 +41,20 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# APPX verification and build artifacts
+appx_verification/
+electron/release/
+electron/temp*/
+electron/**/temp*/
+
+# Experimental/test files (keep only clean versions)
+electron/assets/icon-*.svg
+!electron/assets/icon-clean.svg
+electron/assets/*-icon.png
+electron/assets/test-*.png
+electron/scripts/test-*.js
+electron/scripts/generate-*.js
+electron/scripts/copy-*.cjs
+electron/scripts/fix-appx-*.cjs
+!electron/scripts/fix-appx-simple.cjs
