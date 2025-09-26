@@ -1,6 +1,6 @@
 {
   "name": "dangunland-mud-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Web-based MUD client for DangunLand with retro 80s computer aesthetic",
   "private": true,
   "type": "module",
@@ -23,8 +23,6 @@
     "build:electron": "npm --workspace shared-ui run build && npm --workspace electron run build",
     "start": "node backend/src/server.js",
     "install-all": "npm install && npm --workspace backend install && npm --workspace shared-ui install && npm --workspace web install && npm --workspace electron install",
-    "dist:electron": "npm --workspace electron run dist",
-    "dist:electron-win": "npm --workspace electron run dist:win",
     "dist:electron-win-store": "npm --workspace electron run dist:win-store"
   },
   "keywords": [
@@ -41,7 +39,6 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "app-builder-bin": "^5.0.0-alpha.10",
     "concurrently": "^9.2.1"
   }
 }

@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Clean gradient background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#001a00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000d00;stop-opacity:1" />
+    </linearGradient>
+    <!-- Subtle glow effect -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rounded background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bgGrad)" stroke="#00cc33" stroke-width="8"/>
+  
+  <!-- Terminal window -->
+  <rect x="96" y="128" width="320" height="256" rx="24" fill="#000000" stroke="#00cc33" stroke-width="6"/>
+  
+  <!-- Title bar -->
+  <rect x="96" y="128" width="320" height="48" rx="24" fill="#00cc33"/>
+  <rect x="104" y="136" width="304" height="32" rx="16" fill="rgba(0,0,0,0.3)"/>
+  
+  <!-- Terminal prompt line -->
+  <rect x="128" y="210" width="256" height="16" rx="8" fill="#00cc33" opacity="0.9"/>
+  
+  <!-- Command line with cursor -->
+  <rect x="128" y="250" width="180" height="16" rx="8" fill="#00cc33" opacity="0.7"/>
+  <rect x="316" y="250" width="20" height="16" rx="4" fill="#00cc33" filter="url(#softGlow)">
+    <animate attributeName="opacity" values="1;0.3;1" dur="1.8s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Korean "단군" text (clean, readable) -->
+  <text x="256" y="450" text-anchor="middle" fill="#00cc33" font-size="36" font-family="Arial, sans-serif" font-weight="600" opacity="0.8">단군</text>
+  
+</svg>

@@ -1,7 +1,8 @@
 {
   "name": "dangunland-electron",
   "productName": "DangunLand MUD Client",
-  "version": "1.0.0",
+  "version": "1.0.2",
+  "type": "module",
   "description": "Desktop MUD client for DangunLand with direct telnet support, Korean encoding, and Windows Store integration",
   "keywords": [
     "mud",
@@ -21,12 +22,8 @@
     "build": "npm run build:renderer && npm run build:main",
     "build:main": "echo 'Main process is already built'",
     "build:renderer": "vite build",
-    "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "dist:win": "electron-builder --win",
-    "dist:win-store": "electron-builder --win --publish=never -c.win.target=appx",
-    "check-store-ready": "node scripts/prepare-store.js",
-    "validate-config": "node scripts/validate-config.js"
+    "dist:win-store": "electron-builder --win --publish=never -c.win.target=appx"
   },
   "dependencies": {
     "dangunland-shared-ui": "file:../shared-ui",
@@ -41,6 +38,7 @@
     "electron-builder": "^26.0.12",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "sharp": "^0.34.4",
     "vite": "^7.1.2",
     "wait-on": "^8.0.1"
   },
@@ -49,11 +47,13 @@
     "productName": "DangunLand MUD Client",
     "electronVersion": "32.0.0",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "."
     },
     "files": [
       "src/**/*",
       "dist/**/*",
+      "assets/**/*",
       "!node_modules/**/test/**/*",
       "!node_modules/**/tests/**/*",
       "!node_modules/**/*.md",
@@ -88,7 +88,7 @@
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false
     },
-    "afterPack": "./scripts/optimize-locales.js",
+    "afterPack": "./scripts/optimize-locales.cjs",
     "appx": {
       "applicationId": "App",
       "backgroundColor": "#000000",
