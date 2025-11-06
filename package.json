@@ -23,7 +23,7 @@
     "build:electron": "npm --workspace shared-ui run build && npm --workspace electron run build",
     "start": "node backend/src/server.js",
     "install-all": "npm install && npm --workspace backend install && npm --workspace shared-ui install && npm --workspace web install && npm --workspace electron install",
-    "dist:electron-win-store": "npm --workspace electron run dist:win-store"
+    "dist:electron-win-store": "npm run build:electron && npm --workspace electron run dist:win-store"
   },
   "keywords": [
     "mud",

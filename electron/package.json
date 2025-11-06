@@ -101,7 +101,9 @@
         "ko-KR"
       ],
       "setBuildNumber": true,
-      "showNameOnTiles": true
+      "showNameOnTiles": true,
+      "addAutoLaunchExtension": false,
+      "makeappxArgs": ["/nv"]
     },
     "nsis": {
       "oneClick": false,
